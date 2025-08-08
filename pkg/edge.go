@@ -36,8 +36,8 @@ const (
 	CLEAR           = 0x00
 )
 
-func (e Edges) getSignedDistnace(c EdgeColor, p fixed.Point26_6) float64 {
-	dst := math.MaxFloat32
+func (e Edges) getSignedDistnace(c EdgeColor, p fixed.Point26_6) fixed.Int26_6 {
+	dst := fixed.Int26_6(math.MaxInt32)
 	win := 0
 	edgeCount := 0
 	for _, edge := range e {
@@ -47,9 +47,12 @@ func (e Edges) getSignedDistnace(c EdgeColor, p fixed.Point26_6) float64 {
 		edgeCount++
 
 		shape := edge.Shape()
+		d := shape.GetDistance(p)
 
-		dst = math.Min(dst, shape.GetDistance(p))
-		intersections := shape.Intersect(p)
+		if d < dst {
+			dst = d
+		}
+		intersections := shape.RayHits(p)
 		win += intersections
 	}
 
@@ -152,26 +155,25 @@ func (m *Msdf) getEdges(r rune) (Edges, *TextureCoordScaler, error) {
 	bounds.Max.X += padding
 	bounds.Max.Y += padding
 
-	// Debug the glyph bounds
-	minX, minY := p26_6__f64(bounds.Min)
-	maxX, maxY := p26_6__f64(bounds.Max)
-	fmt.Printf("'%c' bounds (with padding): (%.2f,%.2f) to (%.2f,%.2f), size: %.2fx%.2f\n",
-		r, minX, minY, maxX, maxY, maxX-minX, maxY-minY)
+	// Bounds calculation working correctly
 
 	scaler := &TextureCoordScaler{bounds: bounds, config: m.config}
 	return edges, scaler, nil
 }
 
 func (e *TextureCoordScaler) scale(x, y int) fixed.Point26_6 {
-	// Scale and offset to map texture space to font space
-	maxX, maxY := p26_6__f64(e.bounds.Max)
-	minX, minY := p26_6__f64(e.bounds.Min)
-
-	fx := float64(x)/float64(e.config.Advance)*(maxX-minX) + minX
-	fy := float64(y)/float64(e.config.LineHeight)*(maxY-minY) + minY
+	// Pure fixed-point arithmetic - no float conversions
+	rangeX := e.bounds.Max.X - e.bounds.Min.X
+	rangeY := e.bounds.Max.Y - e.bounds.Min.Y
+	
+	// Scale: (pixel / textureSize) * range + min
+	// Using fixed-point multiplication/division
+	fx := (fixed.Int26_6(x) * rangeX) / fixed.Int26_6(e.config.Advance) + e.bounds.Min.X
+	fy := (fixed.Int26_6(y) * rangeY) / fixed.Int26_6(e.config.LineHeight) + e.bounds.Min.Y
+	
 	return fixed.Point26_6{
-		X: fixed.Int26_6(fx),
-		Y: fixed.Int26_6(fy),
+		X: fx,
+		Y: fy,
 	}
 }
 

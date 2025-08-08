@@ -1,12 +1,12 @@
 package msdf
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"os"
 
 	"golang.org/x/image/font/sfnt"
+	"golang.org/x/image/math/fixed"
 )
 
 type Msdf struct {
@@ -60,13 +60,10 @@ func (m *Msdf) Get(r rune) *image.RGBA {
 		for x := range m.config.Advance {
 
 			p := s.scale(x, y)
+
 			r := edges.getSignedDistnace(RED, p)
 			g := edges.getSignedDistnace(GREEN, p)
 			b := edges.getSignedDistnace(BLUE, p)
-
-			if x < 5 && y < 5 { // Debug first few pixels
-				fmt.Printf("Pixel (%d,%d): r=%.3f g=%.3f b=%.3f\n", x, y, r, g, b)
-			}
 
 			tex.Set(x, y, color.RGBA{
 				normlize(r),
@@ -81,11 +78,17 @@ func (m *Msdf) Get(r rune) *image.RGBA {
 	return tex
 }
 
-func normlize(c float64) uint8 {
-	// More aggressive mapping for visibility
-	if c < 0 {
-		return 0 // Inside = black
-	} else {
-		return 255 // Outside = white  
+func normlize(c fixed.Int26_6) uint8 {
+	// Fixed-point MSDF normalization
+	// Center at 128 (edge), scale for good contrast
+	// c is in 26.6 format (value * 64)
+	normalized := 128 + (int(c) >> 1) // Divide by 2 for scaling (was >>6 then *32, now >>1)
+
+	if normalized < 0 {
+		return 0
 	}
+	if normalized > 255 {
+		return 255
+	}
+	return uint8(normalized)
 }
