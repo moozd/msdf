@@ -10,12 +10,12 @@ import (
 func main() {
 
 	cfg := &msdf.Config{
-		LineHeight: 256,
-		Advance:    256,
+		LineHeight: 512,
+		Advance:    512,
 	}
 	tex, _ := msdf.New("/home/mo/.local/share/fonts/Monaspace/MonaspiceArNerdFont-Regular.otf", cfg)
 
-	glyph := tex.Get('D')
+	glyph := tex.Get('A')
 
 	file, _ := os.Create("output.png")
 	defer file.Close()

@@ -1,12 +1,13 @@
 package msdf
 
 import (
+	"fmt"
 	"image"
 	"image/color"
+	"image/draw"
 	"os"
 
 	"golang.org/x/image/font/sfnt"
-	"golang.org/x/image/math/fixed"
 )
 
 type Msdf struct {
@@ -19,9 +20,9 @@ type Config struct {
 }
 
 var colors = []EdgeColor{
-	RED | GREEN,
-	RED | BLUE,
-	BLUE | GREEN,
+	RED,
+	GREEN,
+	BLUE,
 }
 
 func New(addr string, cfg *Config) (*Msdf, error) {
@@ -48,41 +49,78 @@ func New(addr string, cfg *Config) (*Msdf, error) {
 
 func (m *Msdf) Get(r rune) *image.RGBA {
 
-	edges, s, _ := m.getEdges(r)
+	edges, scaler, _ := m.getEdges(r)
 
-	for i, edge := range edges {
-		edge.Paint(colors[i%len(colors)])
+	var corners [][]*Edge
+
+	corners = make([][]*Edge, len(edges))
+	for i := range edges {
+		for j := range edges {
+			b := edges[i].Curve.IsAttached(edges[j].Curve)
+			if b {
+				corners[i] = append(corners[i], &edges[j])
+			}
+		}
+		corners[i] = append(corners[i], &edges[i])
+	}
+
+	mp := make(map[*Edge]bool)
+
+	for i, c := range corners {
+		for j := range c {
+
+			// if mp[corners[i][j]] {
+			// 	continue
+			// }
+			cl := colors[j%len(colors)]
+
+			corners[i][j].Color = cl
+			mp[corners[i][j]] = true
+		}
+	}
+
+	for i := range edges {
+		fmt.Println(corners[i])
 	}
 
 	tex := image.NewRGBA(image.Rect(0, 0, m.config.Advance, m.config.LineHeight))
+	bg := &image.Uniform{color.RGBA{0, 0, 0, 255}}
+	draw.Draw(tex, tex.Bounds(), bg, image.Point{}, draw.Src)
 
-	for y := range m.config.LineHeight {
-		for x := range m.config.Advance {
+	// for y := range m.config.LineHeight {
+	// 	for x := range m.config.Advance {
+	//
+	// 		p := scaler.p2g(x, y)
+	//
+	// 		r := edges.getSignedDistnace(RED, p)
+	// 		g := edges.getSignedDistnace(GREEN, p)
+	// 		b := edges.getSignedDistnace(BLUE, p)
+	//
+	// 		if math.Abs(r-g) > 1 || math.Abs(r-b) > 1 || math.Abs(g-b) > 1 {
+	// 			fmt.Printf("Pixel (%d,%d): R=%.2f G=%.2f B=%.2f\n", x, y, r, g, b)
+	// 		}
+	// 		tex.Set(x, y, color.RGBA{
+	// 			normlize(r),
+	// 			normlize(g),
+	// 			normlize(b),
+	// 			255,
+	// 		})
+	//
+	// 	}
+	// }
 
-			p := s.scale(x, y)
-
-			r := edges.getSignedDistnace(RED, p)
-			g := edges.getSignedDistnace(GREEN, p)
-			b := edges.getSignedDistnace(BLUE, p)
-
-			tex.Set(x, y, color.RGBA{
-				normlize(r),
-				normlize(g),
-				normlize(b),
-				255,
-			})
-
-		}
+	for _, edge := range edges {
+		edge.Curve.Debug(tex, edge.Color.RGB(), scaler)
 	}
 
 	return tex
 }
 
-func normlize(c fixed.Int26_6) uint8 {
-	// Fixed-point MSDF normalization
-	// Center at 128 (edge), scale for good contrast
-	// c is in 26.6 format (value * 64)
-	normalized := 128 + (int(c) >> 1) // Divide by 2 for scaling (was >>6 then *32, now >>1)
+func normlize(c float64) uint8 {
+	// Convert distance to range [0, 255] where 128 is the zero-distance point
+	// Typical MSDF range is roughly [-4, 4] pixels, so scale accordingly
+	normalized := 128.0 + c*16.0 // Scale distance and offset to center at 128
+	// fmt.Printf("Distance: %f, Normalized: %f\n", c, normalized)
 
 	if normalized < 0 {
 		return 0

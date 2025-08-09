@@ -2,6 +2,7 @@ package msdf
 
 import (
 	"fmt"
+	"image/color"
 	"math"
 
 	"golang.org/x/image/font/sfnt"
@@ -10,19 +11,13 @@ import (
 
 type Edges []Edge
 
-type Edge interface {
-	Has(c EdgeColor) bool
-	Paint(c EdgeColor)
-	Shape() Shape
+type Edge struct {
+	Kind  string
+	Color EdgeColor
+	Curve *Curve
 }
 
-type edge struct {
-	kind  string
-	color EdgeColor
-	shape Shape
-}
-
-type TextureCoordScaler struct {
+type Scaler struct {
 	bounds fixed.Rectangle26_6
 	config *Config
 }
@@ -30,44 +25,43 @@ type TextureCoordScaler struct {
 type EdgeColor byte
 
 const (
-	RED   EdgeColor = 3
-	GREEN           = 3 << 2
-	BLUE            = 3 << 4
+	RED   EdgeColor = 1 << 0 // = 1 (bit 0)
+	GREEN           = 1 << 1 // = 2 (bit 1)
+	BLUE            = 1 << 2 // = 4 (bit 2)
 	CLEAR           = 0x00
 )
 
-func (e Edges) getSignedDistnace(c EdgeColor, p fixed.Point26_6) fixed.Int26_6 {
-	dst := fixed.Int26_6(math.MaxInt32)
-	win := 0
+func (e Edges) getSignedDistnace(c EdgeColor, p fixed.Point26_6) float64 {
+	dst := math.MaxFloat64
+	winding := 0
 	edgeCount := 0
 	for _, edge := range e {
-		if !edge.Has(c) {
+		if !edge.Color.Has(c) {
 			continue
 		}
 		edgeCount++
 
-		shape := edge.Shape()
-		d := shape.GetDistance(p)
+		d := edge.Curve.FindMinDistance(p)
 
 		if d < dst {
 			dst = d
 		}
-		intersections := shape.RayHits(p)
-		win += intersections
+		w := edge.Curve.Cast(p)
+		winding += w
 	}
 
 	if edgeCount == 0 {
-		return 0 // No edges found for this color
+		return 0
 	}
 
-	if win%2 == 1 {
+	if winding%2 == 1 {
 		return -dst
 	}
 
 	return dst
 }
 
-func (m *Msdf) getEdges(r rune) (Edges, *TextureCoordScaler, error) {
+func (m *Msdf) getEdges(r rune) (Edges, *Scaler, error) {
 	var edges []Edge
 
 	ppem := fixed.I(12)
@@ -109,6 +103,13 @@ func (m *Msdf) getEdges(r rune) (Edges, *TextureCoordScaler, error) {
 		}
 	}
 
+	fmt.Printf("Glyph Coords: Y(%f,%f) X(%f,%f)\n",
+		unpack_i26_6(bounds.Min.Y),
+		unpack_i26_6(bounds.Max.Y),
+		unpack_i26_6(bounds.Min.X),
+		unpack_i26_6(bounds.Max.X),
+	)
+
 	// Second pass: create edges
 	for _, segment := range segments {
 		args := segment.Args
@@ -117,30 +118,30 @@ func (m *Msdf) getEdges(r rune) (Edges, *TextureCoordScaler, error) {
 			p0 = args[0]
 		case sfnt.SegmentOpLineTo:
 
-			edges = append(edges, &edge{
-				kind:  "Line",
-				shape: &LineShape{P0: p0, P1: args[0]},
+			edges = append(edges, Edge{
+				Kind:  "Line",
+				Curve: NewCurve(&Line{P0: p0, P1: args[0]}),
 			})
 			p0 = args[0]
 		case sfnt.SegmentOpCubeTo:
-			edges = append(edges, &edge{
-				kind: "Cubic",
-				shape: &CubicBezierShape{
+			edges = append(edges, Edge{
+				Kind: "Cubic",
+				Curve: NewCurve(&CubicBezier{
 					P0: p0,
 					P1: args[0],
 					P2: args[1],
 					P3: args[2],
-				},
+				}),
 			})
 			p0 = args[2]
 		case sfnt.SegmentOpQuadTo:
-			edges = append(edges, &edge{
-				kind: "Quadratic",
-				shape: &QuadraticBezierShape{
+			edges = append(edges, Edge{
+				Kind: "Quadratic",
+				Curve: NewCurve(&QuadraticBezier{
 					P0: p0,
 					P1: args[0],
 					P2: args[1],
-				},
+				}),
 			})
 			p0 = args[1]
 
@@ -148,49 +149,65 @@ func (m *Msdf) getEdges(r rune) (Edges, *TextureCoordScaler, error) {
 
 	}
 
-	// Add padding around glyph bounds for better visibility
-	padding := fixed.Int26_6(2 * 64) // 2 units of padding
+	padding := pack_i26_6(0.5)
 	bounds.Min.X -= padding
 	bounds.Min.Y -= padding
 	bounds.Max.X += padding
 	bounds.Max.Y += padding
 
-	// Bounds calculation working correctly
-
-	scaler := &TextureCoordScaler{bounds: bounds, config: m.config}
+	scaler := &Scaler{bounds: bounds, config: m.config}
 	return edges, scaler, nil
+
 }
 
-func (e *TextureCoordScaler) scale(x, y int) fixed.Point26_6 {
-	// Pure fixed-point arithmetic - no float conversions
+func (e *Scaler) p2g(x, y int) fixed.Point26_6 {
 	rangeX := e.bounds.Max.X - e.bounds.Min.X
 	rangeY := e.bounds.Max.Y - e.bounds.Min.Y
-	
-	// Scale: (pixel / textureSize) * range + min
-	// Using fixed-point multiplication/division
-	fx := (fixed.Int26_6(x) * rangeX) / fixed.Int26_6(e.config.Advance) + e.bounds.Min.X
-	fy := (fixed.Int26_6(y) * rangeY) / fixed.Int26_6(e.config.LineHeight) + e.bounds.Min.Y
-	
+
+	fx := (fixed.I(x)*rangeX)/fixed.I(e.config.Advance) + e.bounds.Min.X
+	fy := e.bounds.Min.Y - (fixed.I(y)*rangeY)/fixed.I(e.config.LineHeight)
+
 	return fixed.Point26_6{
 		X: fx,
 		Y: fy,
 	}
 }
 
-func (e *edge) Has(color EdgeColor) bool {
-	return (e.color & color) == color
+func (e *Scaler) g2p(p fixed.Point26_6) (int, int) {
+	rangeX := e.bounds.Max.X - e.bounds.Min.X
+	rangeY := e.bounds.Max.Y - e.bounds.Min.Y
+
+	// Convert back from glyph coords to pixel coords
+	pixelX := ((p.X - e.bounds.Min.X) * fixed.I(e.config.Advance)) / rangeX
+	pixelY := ((p.Y - e.bounds.Min.Y) * fixed.I(e.config.LineHeight)) / rangeY
+
+	return pixelX.Round(), pixelY.Round()
 }
 
-func (e *edge) Paint(color EdgeColor) {
-	e.color = color
+func (e EdgeColor) RGB() color.RGBA {
+
+	var r, g, b uint8
+
+	if (e & RED) == RED {
+		r = 255
+	}
+
+	if (e & GREEN) == GREEN {
+		g = 255
+	}
+
+	if (e & BLUE) == BLUE {
+		b = 255
+	}
+	return color.RGBA{r, g, b, 255}
 }
 
-func (e *edge) Shape() Shape {
-	return e.shape
+func (e *Edge) String() string {
+	return fmt.Sprintf("%s: %s", e.Kind, e.Color)
 }
 
-func (e *edge) String() string {
-	return fmt.Sprintf("%s: %s", e.kind, e.color)
+func (e EdgeColor) Has(color EdgeColor) bool {
+	return (e & color) == color
 }
 
 func (e EdgeColor) String() string {
