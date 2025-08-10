@@ -15,6 +15,7 @@ type Msdf struct {
 
 type Config struct {
 	LineHeight, Advance int
+	Debug               bool
 }
 
 var colors = []EdgeColor{
@@ -72,20 +73,19 @@ func (m *Msdf) Get(r rune) *Glyph {
 		}
 	}
 
-	for _, edge := range edges {
-		edge.Curve.Debug(dbg, edge.Color.RGB(), scaler)
-	}
+	if m.cfg.Debug {
+		for _, edge := range edges {
+			edge.Curve.Debug(dbg, edge.Color.RGB(), scaler)
+		}
+		dbg.Save(fmt.Sprintf("assets/%c_debug.png", r))
 
-	dbg.Save(fmt.Sprintf("%c_debug.png", r))
+	}
 
 	return tex
 }
 
 func normalize(c float64) uint8 {
-	// Convert distance to range [0, 255] where 128 is the zero-distance point
-	// Typical MSDF range is roughly [-4, 4] pixels, so scale accordingly
-	normalized := 128.0 + c*16.0 // Scale distance and offset to center at 128
-	// fmt.Printf("Distance: %f, Normalized: %f\n", c, normalized)
+	normalized := 128.0 + c*64.0
 
 	if normalized < 0 {
 		return 0
