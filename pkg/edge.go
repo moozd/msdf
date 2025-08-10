@@ -31,6 +31,38 @@ const (
 	CLEAR           = 0x00
 )
 
+func (e Edges) setupColors() {
+	for i := range e {
+		e[i].Color = colors[i%3]
+	}
+
+	// corners := make(map[*Edge][]*Edge)
+	//
+	// for i := range e {
+	// 	corners[&e[i]] = make([]*Edge, 0)
+	// 	for j := range e {
+	// 		curveA := e[i].Curve
+	// 		curveB := e[j].Curve
+	//
+	// 		isCorner := curveA.IsAttached(curveB)
+	// 		if isCorner {
+	// 			corners[&e[i]] = append(corners[&e[i]], &e[j])
+	// 		}
+	// 	}
+	// }
+	//
+	// for i := range len(e) {
+	// 	cl := colors[i%len(colors)]
+	// 	// for j := range    {
+	// 	// 	corners[i][j].Color = cl
+	// 	// }
+	// }
+	//
+	// for i := range e {
+	// 	fmt.Println(corners[i])
+	// }
+}
+
 func (e Edges) getSignedDistnace(c EdgeColor, p fixed.Point26_6) float64 {
 	dst := math.MaxFloat64
 	winding := 0

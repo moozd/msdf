@@ -1,7 +1,6 @@
 package msdf
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
@@ -51,37 +50,7 @@ func (m *Msdf) Get(r rune) *image.RGBA {
 
 	edges, scaler, _ := m.getEdges(r)
 
-	var corners [][]*Edge
-
-	corners = make([][]*Edge, len(edges))
-	for i := range edges {
-		for j := range edges {
-			b := edges[i].Curve.IsAttached(edges[j].Curve)
-			if b {
-				corners[i] = append(corners[i], &edges[j])
-			}
-		}
-		corners[i] = append(corners[i], &edges[i])
-	}
-
-	mp := make(map[*Edge]bool)
-
-	for i, c := range corners {
-		for j := range c {
-
-			// if mp[corners[i][j]] {
-			// 	continue
-			// }
-			cl := colors[j%len(colors)]
-
-			corners[i][j].Color = cl
-			mp[corners[i][j]] = true
-		}
-	}
-
-	for i := range edges {
-		fmt.Println(corners[i])
-	}
+	edges.setupColors()
 
 	tex := image.NewRGBA(image.Rect(0, 0, m.config.Advance, m.config.LineHeight))
 	bg := &image.Uniform{color.RGBA{0, 0, 0, 255}}
@@ -100,9 +69,9 @@ func (m *Msdf) Get(r rune) *image.RGBA {
 	// 			fmt.Printf("Pixel (%d,%d): R=%.2f G=%.2f B=%.2f\n", x, y, r, g, b)
 	// 		}
 	// 		tex.Set(x, y, color.RGBA{
-	// 			normlize(r),
-	// 			normlize(g),
-	// 			normlize(b),
+	// 			normalize(r),
+	// 			normalize(g),
+	// 			normalize(b),
 	// 			255,
 	// 		})
 	//
@@ -116,7 +85,7 @@ func (m *Msdf) Get(r rune) *image.RGBA {
 	return tex
 }
 
-func normlize(c float64) uint8 {
+func normalize(c float64) uint8 {
 	// Convert distance to range [0, 255] where 128 is the zero-distance point
 	// Typical MSDF range is roughly [-4, 4] pixels, so scale accordingly
 	normalized := 128.0 + c*16.0 // Scale distance and offset to center at 128

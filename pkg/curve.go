@@ -26,10 +26,10 @@ func NewCurve(ci CurveSampler) *Curve {
 }
 
 func (c *Curve) IsAttached(b *Curve) bool {
-	start1, end1 := c.Points[0], c.Points[len(c.Points)-1]
+	end1 := c.Points[len(c.Points)-1]
 	start2, end2 := b.Points[0], b.Points[len(b.Points)-1]
 
-	return (start1 == end2) || (end1 == start2) || (start1 == start2) || (end1 == end2)
+	return (end1 == start2) || (end1 == end2)
 }
 
 func (c *Curve) Sample() {
