@@ -3,7 +3,6 @@ package msdf
 import (
 	"fmt"
 	"image/color"
-	"math"
 	"os"
 
 	"golang.org/x/image/font/sfnt"
@@ -47,27 +46,23 @@ func New(addr string, cfg *Config) (*Msdf, error) {
 }
 
 func (m *Msdf) Get(r rune) *Glyph {
-
-	edges, scaler, _ := m.getEdges(r)
-
-	edges.setupColors()
-
 	tex := NewGlyph(m.cfg)
 	dbg := NewGlyph(m.cfg)
+
+	edges, scaler, _ := m.getEdges(r)
+	contours := edges.getContours()
 
 	for y := range m.cfg.LineHeight {
 		for x := range m.cfg.Advance {
 
 			p := scaler.p2g(x, y)
+			flipY := m.cfg.LineHeight - 1 - y
 
-			r := edges.getSignedDistnace(RED, p)
-			g := edges.getSignedDistnace(GREEN, p)
-			b := edges.getSignedDistnace(BLUE, p)
+			r := contours.getSignedDistnace(RED, p)
+			g := contours.getSignedDistnace(GREEN, p)
+			b := contours.getSignedDistnace(BLUE, p)
 
-			if math.Abs(r-g) > 1 || math.Abs(r-b) > 1 || math.Abs(g-b) > 1 {
-				fmt.Printf("PIX (%d,%d): R=%.2f G=%.2f B=%.2f\n", x, y, r, g, b)
-			}
-			tex.Image().Set(x, y, color.RGBA{
+			tex.Image().Set(x, flipY, color.RGBA{
 				normalize(r),
 				normalize(g),
 				normalize(b),

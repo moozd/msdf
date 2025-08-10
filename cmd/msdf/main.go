@@ -9,8 +9,8 @@ import (
 func main() {
 
 	cfg := &msdf.Config{
-		LineHeight: 500,
-		Advance:    500,
+		LineHeight: 256,
+		Advance:    256,
 	}
 
 	C := 'R'

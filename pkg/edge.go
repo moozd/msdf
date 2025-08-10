@@ -11,6 +11,7 @@ import (
 )
 
 type Edges []Edge
+type Contours [][]*Edge
 
 type Edge struct {
 	Kind  string
@@ -32,7 +33,7 @@ const (
 	CLEAR           = 0x00
 )
 
-func (e Edges) getContours() [][]*Edge {
+func (e Edges) getContours() Contours {
 
 	var contours [][]*Edge
 
@@ -60,17 +61,17 @@ func (e Edges) getContours() [][]*Edge {
 		cI += 1
 	}
 
+	assignColors(contours)
+
 	return contours
 }
 
-func (e Edges) setupColors() {
+func assignColors(cons [][]*Edge) {
 
 	colorIndex := 0
-	cons := e.getContours()
 
 	for i := range cons {
 
-		// fmt.Printf("contour: %d -------- count: %d \n", i+1, len(cons[i]))
 		shrpest := make(MaxHeap, 0)
 		heap.Init(&shrpest)
 
@@ -79,7 +80,6 @@ func (e Edges) setupColors() {
 			b := cons[i][j]
 			v, ok := a.Curve.GetSharpCorner(b.Curve, 50)
 			if ok {
-				// fmt.Printf("sharp corner found\n")
 				heap.Push(&shrpest, &HeapItem{value: j, priority: v})
 			}
 		}
@@ -103,28 +103,26 @@ func (e Edges) setupColors() {
 	}
 }
 
-func (e Edges) getSignedDistnace(c EdgeColor, p fixed.Point26_6) float64 {
+func (contours Contours) getSignedDistnace(c EdgeColor, p fixed.Point26_6) float64 {
+
 	dst := math.MaxFloat64
 	winding := 0
-	edgeCount := 0
-	for _, edge := range e {
-		if !edge.Color.Has(c) {
-			continue
+
+	for i := range contours {
+		contour := contours[i]
+		for j := range contour {
+			edge := contour[j]
+			w := edge.Curve.Cast(p)
+			winding += w
+
+			if !edge.Color.Has(c) {
+				continue
+			}
+			d := edge.Curve.FindMinDistance(p)
+			if d < dst {
+				dst = d
+			}
 		}
-		edgeCount++
-
-		d := edge.Curve.FindMinDistance(p)
-
-		if d < dst {
-			dst = d
-		}
-		w := edge.Curve.Cast(p)
-		winding += w
-	}
-
-	fmt.Printf("d: %f\n", dst)
-	if edgeCount == 0 {
-		return 0
 	}
 
 	if winding%2 == 1 {
@@ -238,7 +236,7 @@ func (e *Scaler) p2g(x, y int) fixed.Point26_6 {
 	rangeY := e.bounds.Max.Y - e.bounds.Min.Y
 
 	fx := (fixed.I(x)*rangeX)/fixed.I(e.config.Advance) + e.bounds.Min.X
-	fy := e.bounds.Min.Y - (fixed.I(y)*rangeY)/fixed.I(e.config.LineHeight)
+	fy := e.bounds.Max.Y - (fixed.I(y)*rangeY)/fixed.I(e.config.LineHeight)
 
 	return fixed.Point26_6{
 		X: fx,
