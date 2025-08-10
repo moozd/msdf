@@ -85,7 +85,9 @@ func (m *Msdf) Get(r rune) *Glyph {
 }
 
 func normalize(c float64) uint8 {
-	normalized := 128.0 + c*64.0
+	// Standard MSDF encoding: negative distances (inside) = high values (white)
+	// Positive distances (outside) = low values (dark)
+	normalized := 128.0 - c*64.0
 
 	if normalized < 0 {
 		return 0

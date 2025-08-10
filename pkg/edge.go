@@ -150,7 +150,6 @@ func (m *Msdf) getEdges(r rune) (Edges, *Scaler, error) {
 
 	var p0 fixed.Point26_6
 
-	// Calculate actual glyph bounds from segments
 	bounds := fixed.Rectangle26_6{
 		Min: fixed.Point26_6{X: fixed.Int26_6(1 << 20), Y: fixed.Int26_6(1 << 20)},
 		Max: fixed.Point26_6{X: fixed.Int26_6(-1 << 20), Y: fixed.Int26_6(-1 << 20)},
@@ -220,7 +219,7 @@ func (m *Msdf) getEdges(r rune) (Edges, *Scaler, error) {
 
 	}
 
-	padding := pack_i26_6(0.5)
+	padding := pack_i26_6(0.9)
 	bounds.Min.X -= padding
 	bounds.Min.Y -= padding
 	bounds.Max.X += padding
