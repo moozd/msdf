@@ -6,13 +6,32 @@ import (
 	"golang.org/x/image/math/fixed"
 )
 
-func getDistance(p0, p1 fixed.Point26_6) float64 {
+func dist(p0, p1 fixed.Point26_6) float64 {
 	x0, y0 := unpack_p26_6(p0)
 	x1, y1 := unpack_p26_6(p1)
 
 	res := math.Sqrt(math.Pow(y1-y0, 2) + math.Pow(x1-x0, 2))
 
 	return res
+}
+
+func angle_abc(p0, p1, p2 fixed.Point26_6) float64 {
+	x0, y0 := unpack_p26_6(p0)
+	x1, y1 := unpack_p26_6(p1)
+	x2, y2 := unpack_p26_6(p2)
+
+	ax, ay, bx, by := (x0 - x1), (y0 - y1), (x2 - x1), (y2 - y1)
+	dp := ax*bx + ay*by
+	ma := math.Sqrt(math.Pow(ax, 2) + math.Pow(ay, 2))
+	mb := math.Sqrt(math.Pow(bx, 2) + math.Pow(by, 2))
+
+	res := dp / (ma * mb)
+	ang := math.Acos(res) * (180 * math.Pi)
+
+	// fmt.Printf("angle: A(%f,%f) B(%f,%f) C(%f,%f)\n", x0, y0, x1, y1, x2, y2)
+	// fmt.Printf("angle: %f deg\n", ang)
+
+	return ang
 }
 
 func unpack_p26_6(p fixed.Point26_6) (float64, float64) {

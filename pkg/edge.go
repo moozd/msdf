@@ -1,6 +1,7 @@
 package msdf
 
 import (
+	"container/heap"
 	"fmt"
 	"image/color"
 	"math"
@@ -31,36 +32,75 @@ const (
 	CLEAR           = 0x00
 )
 
-func (e Edges) setupColors() {
-	for i := range e {
-		e[i].Color = colors[i%3]
+func (e Edges) getContours() [][]*Edge {
+
+	var contours [][]*Edge
+
+	contours = append(contours, []*Edge{})
+
+	cI := 0
+	includeFirstEdge := true
+	for i := 1; i < len(e); i += 1 {
+		a, b := &e[i-1], &e[i]
+
+		isConnected := a.Curve.IsConnected(b.Curve)
+
+		if isConnected {
+
+			if includeFirstEdge {
+				contours[cI] = append(contours[cI], a)
+				includeFirstEdge = false
+			}
+			contours[cI] = append(contours[cI], b)
+			continue
+		}
+
+		contours = append(contours, []*Edge{})
+		includeFirstEdge = true
+		cI += 1
 	}
 
-	// corners := make(map[*Edge][]*Edge)
-	//
-	// for i := range e {
-	// 	corners[&e[i]] = make([]*Edge, 0)
-	// 	for j := range e {
-	// 		curveA := e[i].Curve
-	// 		curveB := e[j].Curve
-	//
-	// 		isCorner := curveA.IsAttached(curveB)
-	// 		if isCorner {
-	// 			corners[&e[i]] = append(corners[&e[i]], &e[j])
-	// 		}
-	// 	}
-	// }
-	//
-	// for i := range len(e) {
-	// 	cl := colors[i%len(colors)]
-	// 	// for j := range    {
-	// 	// 	corners[i][j].Color = cl
-	// 	// }
-	// }
-	//
-	// for i := range e {
-	// 	fmt.Println(corners[i])
-	// }
+	return contours
+}
+
+func (e Edges) setupColors() {
+
+	colorIndex := 0
+	cons := e.getContours()
+
+	for i := range cons {
+
+		// fmt.Printf("contour: %d -------- count: %d \n", i+1, len(cons[i]))
+		shrpest := make(MaxHeap, 0)
+		heap.Init(&shrpest)
+
+		for j := 1; j < len(cons[i]); j += 1 {
+			a := cons[i][j-1]
+			b := cons[i][j]
+			v, ok := a.Curve.GetSharpCorner(b.Curve, 50)
+			if ok {
+				// fmt.Printf("sharp corner found\n")
+				heap.Push(&shrpest, &HeapItem{value: j, priority: v})
+			}
+		}
+
+		colorIndex = 0
+		m1, m2, m3 := 0, 1, 2
+
+		if shrpest.Len() >= 3 {
+			m1 = heap.Pop(&shrpest).(*HeapItem).value
+			m2 = heap.Pop(&shrpest).(*HeapItem).value
+			m3 = heap.Pop(&shrpest).(*HeapItem).value
+		}
+
+		for j := range cons[i] {
+			cons[i][j].Color = colors[colorIndex]
+			if j == m1 || j == m2 || j == m3 {
+				colorIndex = (colorIndex + 1) % 3
+			}
+		}
+
+	}
 }
 
 func (e Edges) getSignedDistnace(c EdgeColor, p fixed.Point26_6) float64 {
@@ -82,6 +122,7 @@ func (e Edges) getSignedDistnace(c EdgeColor, p fixed.Point26_6) float64 {
 		winding += w
 	}
 
+	fmt.Printf("d: %f\n", dst)
 	if edgeCount == 0 {
 		return 0
 	}
@@ -151,13 +192,13 @@ func (m *Msdf) getEdges(r rune) (Edges, *Scaler, error) {
 		case sfnt.SegmentOpLineTo:
 
 			edges = append(edges, Edge{
-				Kind:  "Line",
+				Kind:  "L",
 				Curve: NewCurve(&Line{P0: p0, P1: args[0]}),
 			})
 			p0 = args[0]
 		case sfnt.SegmentOpCubeTo:
 			edges = append(edges, Edge{
-				Kind: "Cubic",
+				Kind: "C",
 				Curve: NewCurve(&CubicBezier{
 					P0: p0,
 					P1: args[0],
@@ -168,7 +209,7 @@ func (m *Msdf) getEdges(r rune) (Edges, *Scaler, error) {
 			p0 = args[2]
 		case sfnt.SegmentOpQuadTo:
 			edges = append(edges, Edge{
-				Kind: "Quadratic",
+				Kind: "Q",
 				Curve: NewCurve(&QuadraticBezier{
 					P0: p0,
 					P1: args[0],
@@ -187,7 +228,7 @@ func (m *Msdf) getEdges(r rune) (Edges, *Scaler, error) {
 	bounds.Max.X += padding
 	bounds.Max.Y += padding
 
-	scaler := &Scaler{bounds: bounds, config: m.config}
+	scaler := &Scaler{bounds: bounds, config: m.cfg}
 	return edges, scaler, nil
 
 }

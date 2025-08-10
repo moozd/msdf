@@ -25,37 +25,80 @@ func NewCurve(ci CurveSampler) *Curve {
 	return b
 }
 
-func (c *Curve) IsAttached(b *Curve) bool {
-	end1 := c.Points[len(c.Points)-1]
-	start2, end2 := b.Points[0], b.Points[len(b.Points)-1]
+func (c1 *Curve) IsConnected(c2 *Curve) bool {
 
-	return (end1 == start2) || (end1 == end2)
+	C1N := len(c1.Points)
+	C2N := len(c2.Points)
+	a := c1.Points[C1N-1]
+	s, e := c2.Points[0], c2.Points[C2N-1]
+
+	return (s == a) || (e == a)
 }
 
-func (c *Curve) Sample() {
+func (c1 *Curve) GetSharpCorner(c2 *Curve, tld float64) (float64, bool) {
+
+	C1N := len(c1.Points)
+	C2N := len(c2.Points)
+
+	c1off := 10 % C1N
+	c2off := 10 % C2N
+
+	a, b := c1.Points[C1N-c1off], c2.Points[C1N-1]
+	s, e := c2.Points[0], c2.Points[C2N-1]
+
+	if (s != b) && (e != b) {
+		return 0, false
+	}
+
+	var c fixed.Point26_6
+
+	if e == b {
+		c = c2.Points[C2N-c2off]
+	}
+
+	if s == b {
+		c = c2.Points[c2off]
+	}
+
+	ang := angle_abc(a, b, c)
+
+	if 180-ang < 90 {
+		ang = 180 - ang
+	}
+
+	ok := ang <= tld
+	if ok {
+		return ang, ok
+	}
+
+	return 0, false
+
+}
+
+func (c1 *Curve) Sample() {
 
 	for i := range 65 {
 		t := fixed.Int26_6(i)
-		p := c.sampler.Get(t)
-		c.Points = append(c.Points, p)
+		p := c1.sampler.Get(t)
+		c1.Points = append(c1.Points, p)
 	}
 }
 
-func (c *Curve) FindMinDistance(p0 fixed.Point26_6) float64 {
+func (c1 *Curve) FindMinDistance(p0 fixed.Point26_6) float64 {
 	r := math.MaxFloat64
-	for _, p1 := range c.Points {
-		r = math.Min(r, getDistance(p0, p1))
+	for _, p1 := range c1.Points {
+		r = math.Min(r, dist(p0, p1))
 	}
 
 	return r
 }
 
-func (c *Curve) Cast(p fixed.Point26_6) int {
+func (c1 *Curve) Cast(p fixed.Point26_6) int {
 	winding := 0
 
-	for i := 0; i < len(c.Points)-1; i++ {
-		p1 := c.Points[i]
-		p2 := c.Points[i+1]
+	for i := 0; i < len(c1.Points)-1; i++ {
+		p1 := c1.Points[i]
+		p2 := c1.Points[i+1]
 
 		// Check if horizontal ray from point p crosses the line segment p1->p2
 		if (p1.Y > p.Y) != (p2.Y > p.Y) {

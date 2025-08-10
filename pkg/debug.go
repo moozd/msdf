@@ -1,14 +1,14 @@
 package msdf
 
 import (
-	"image"
 	"image/color"
 )
 
-func (c *Curve) Debug(img *image.RGBA, color color.RGBA, scaler *Scaler) {
+func (c1 *Curve) Debug(g *Glyph, color color.RGBA, scaler *Scaler) {
+	img := g.Image()
 	bounds := img.Bounds()
 
-	for i, p := range c.Points {
+	for i, p := range c1.Points {
 		pixelX, pixelY := scaler.g2p(p)
 
 		if pixelX < bounds.Min.X || pixelX >= bounds.Max.X ||
@@ -16,7 +16,7 @@ func (c *Curve) Debug(img *image.RGBA, color color.RGBA, scaler *Scaler) {
 			continue
 		}
 
-		if i == len(c.Points)-1 {
+		if i == len(c1.Points)-1 {
 			for dx := -1; dx <= 1; dx++ {
 				for dy := -1; dy <= 1; dy++ {
 					x, y := pixelX+dx, pixelY+dy

@@ -1,17 +1,17 @@
 package msdf
 
 import (
-	"image"
+	"fmt"
 	"image/color"
-	"image/draw"
+	"math"
 	"os"
 
 	"golang.org/x/image/font/sfnt"
 )
 
 type Msdf struct {
-	font   *sfnt.Font
-	config *Config
+	font *sfnt.Font
+	cfg  *Config
 }
 
 type Config struct {
@@ -39,48 +39,49 @@ func New(addr string, cfg *Config) (*Msdf, error) {
 	}
 
 	msdf := &Msdf{
-		config: cfg,
-		font:   fnt,
+		cfg:  cfg,
+		font: fnt,
 	}
 
 	return msdf, nil
 }
 
-func (m *Msdf) Get(r rune) *image.RGBA {
+func (m *Msdf) Get(r rune) *Glyph {
 
 	edges, scaler, _ := m.getEdges(r)
 
 	edges.setupColors()
 
-	tex := image.NewRGBA(image.Rect(0, 0, m.config.Advance, m.config.LineHeight))
-	bg := &image.Uniform{color.RGBA{0, 0, 0, 255}}
-	draw.Draw(tex, tex.Bounds(), bg, image.Point{}, draw.Src)
+	tex := NewGlyph(m.cfg)
+	dbg := NewGlyph(m.cfg)
 
-	// for y := range m.config.LineHeight {
-	// 	for x := range m.config.Advance {
-	//
-	// 		p := scaler.p2g(x, y)
-	//
-	// 		r := edges.getSignedDistnace(RED, p)
-	// 		g := edges.getSignedDistnace(GREEN, p)
-	// 		b := edges.getSignedDistnace(BLUE, p)
-	//
-	// 		if math.Abs(r-g) > 1 || math.Abs(r-b) > 1 || math.Abs(g-b) > 1 {
-	// 			fmt.Printf("Pixel (%d,%d): R=%.2f G=%.2f B=%.2f\n", x, y, r, g, b)
-	// 		}
-	// 		tex.Set(x, y, color.RGBA{
-	// 			normalize(r),
-	// 			normalize(g),
-	// 			normalize(b),
-	// 			255,
-	// 		})
-	//
-	// 	}
-	// }
+	for y := range m.cfg.LineHeight {
+		for x := range m.cfg.Advance {
+
+			p := scaler.p2g(x, y)
+
+			r := edges.getSignedDistnace(RED, p)
+			g := edges.getSignedDistnace(GREEN, p)
+			b := edges.getSignedDistnace(BLUE, p)
+
+			if math.Abs(r-g) > 1 || math.Abs(r-b) > 1 || math.Abs(g-b) > 1 {
+				fmt.Printf("PIX (%d,%d): R=%.2f G=%.2f B=%.2f\n", x, y, r, g, b)
+			}
+			tex.Image().Set(x, y, color.RGBA{
+				normalize(r),
+				normalize(g),
+				normalize(b),
+				255,
+			})
+
+		}
+	}
 
 	for _, edge := range edges {
-		edge.Curve.Debug(tex, edge.Color.RGB(), scaler)
+		edge.Curve.Debug(dbg, edge.Color.RGB(), scaler)
 	}
+
+	dbg.Save(fmt.Sprintf("%c_debug.png", r))
 
 	return tex
 }

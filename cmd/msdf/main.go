@@ -1,8 +1,7 @@
 package main
 
 import (
-	"image/png"
-	"os"
+	"fmt"
 
 	msdf "github.com/moozd/msdf/pkg"
 )
@@ -10,15 +9,16 @@ import (
 func main() {
 
 	cfg := &msdf.Config{
-		LineHeight: 512,
-		Advance:    512,
+		LineHeight: 500,
+		Advance:    500,
 	}
-	tex, _ := msdf.New("/Users/mohammad.mohammadzade/Library/Fonts/FiraCodeNerdFont-Regular.ttf", cfg)
 
-	glyph := tex.Get('*')
+	C := 'R'
 
-	file, _ := os.Create("output.png")
-	defer file.Close()
-	png.Encode(file, glyph)
+	tex, _ := msdf.New("/home/mo/.local/share/fonts/Hack/HackNerdFont-Regular.ttf", cfg)
+
+	glyph := tex.Get(C)
+
+	glyph.Save(fmt.Sprintf("%c.png", C))
 
 }
