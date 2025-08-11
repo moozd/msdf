@@ -15,6 +15,40 @@ func dist(p0, p1 fixed.Point26_6) float64 {
 	return res
 }
 
+func clamp(value, min, max float64) float64 {
+	if value < min {
+		return min
+	}
+	if value > max {
+		return max
+	}
+	return value
+}
+
+func sign(x float64) float64 {
+	if x > 0 {
+		return 1
+	}
+	if x < 0 {
+		return -1
+	}
+
+	return 0
+}
+
+func signedArea(points []fixed.Point26_6) fixed.Int26_6 {
+
+	res := fixed.I(0)
+	for i, p0 := range points {
+		j := (i + 1) % len(points)
+		p1 := points[j]
+
+		res += (p1.X - p0.X) * (-p1.Y + -p0.Y)
+	}
+
+	return res
+}
+
 func angle_abc(p0, p1, p2 fixed.Point26_6) float64 {
 	x0, y0 := unpack_p26_6(p0)
 	x1, y1 := unpack_p26_6(p1)

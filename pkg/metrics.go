@@ -1,8 +1,6 @@
 package msdf
 
 import (
-	"math"
-
 	"golang.org/x/image/font/sfnt"
 	"golang.org/x/image/math/fixed"
 )
@@ -12,7 +10,17 @@ type Metrics struct {
 	config *Config
 }
 
-func NewMetrics(cfg *Config, segments sfnt.Segments) *Metrics {
+func (m *Msdf) getMetrics(r rune) (*Metrics, error) {
+
+	segments, err := m.getSegments(r)
+	if err != nil {
+		return nil, err
+	}
+	metrics := newMetrics(m.cfg, segments)
+	return metrics, nil
+}
+
+func newMetrics(cfg *Config, segments sfnt.Segments) *Metrics {
 
 	m := &Metrics{}
 	bounds := fixed.Rectangle26_6{
@@ -20,7 +28,6 @@ func NewMetrics(cfg *Config, segments sfnt.Segments) *Metrics {
 		Max: fixed.Point26_6{X: fixed.Int26_6(-1 << 20), Y: fixed.Int26_6(-1 << 20)},
 	}
 
-	// First pass: calculate bounds
 	for _, segment := range segments {
 		for _, arg := range segment.Args {
 			if arg.X < bounds.Min.X {
@@ -58,19 +65,7 @@ func (e *Metrics) GetRange() (fixed.Int26_6, fixed.Int26_6) {
 	return rangeX, rangeY
 }
 
-func (e *Metrics) Normalize(t float64) float64 {
-
-	x, y := e.config.Advance-1, e.config.LineHeight-1
-	m := dist(e.ToNative(-x, -y), e.ToNative(x, y))
-
-	n := (t + m) / (2 * m)
-	n = math.Max(0.0, math.Min(1.0, n))
-
-	return n
-
-}
-
-func (e *Metrics) ToNative(x, y int) fixed.Point26_6 {
+func (e *Metrics) ToP26_6(x, y int) fixed.Point26_6 {
 	rangeX, rangeY := e.GetRange()
 
 	fx := (fixed.I(x)*rangeX)/fixed.I(e.config.Advance) + e.bounds.Min.X
@@ -80,6 +75,15 @@ func (e *Metrics) ToNative(x, y int) fixed.Point26_6 {
 		X: fx,
 		Y: fy,
 	}
+}
+
+func (e *Metrics) ToFloat(x, y int) (float64, float64) {
+	MX, MY := e.GetRange()
+	rangeX, rangeY := unpack_i26_6(MX), unpack_i26_6(MY)
+
+	fx := (float64(x)*rangeX)/float64(e.config.Advance) + unpack_i26_6(e.bounds.Min.X)
+	fy := unpack_i26_6(e.bounds.Max.Y) - (float64(y)*rangeY)/float64(e.config.LineHeight)
+	return fx, fy
 }
 
 func (e *Metrics) ToPixel(p fixed.Point26_6) (int, int) {

@@ -52,47 +52,77 @@ func (m *Msdf) Get(r rune) *Glyph {
 	tex := NewGlyph(m.cfg)
 	dbg := NewGlyph(m.cfg)
 
-	edges, metrics, _ := m.getEdges(r)
-	contours := edges.getContours()
+	metrics, _ := m.getMetrics(r)
+	contours, _ := m.getContours(r)
+
+	for i, con := range contours {
+		fmt.Printf("con: %d, dir: %v\n", i+1, con.winding)
+	}
 
 	for y := range m.cfg.LineHeight {
 		for x := range m.cfg.Advance {
 
-			p := metrics.ToNative(x, y)
-			flipY := m.cfg.LineHeight - 1 - y
+			xi, yi := metrics.ToFloat(x, y)
+			flippedY := m.cfg.LineHeight - 1 - y
 
-			r := contours.getSignedDistnace(metrics, p, RED)
-			g := contours.getSignedDistnace(metrics, p, GREEN)
-			b := contours.getSignedDistnace(metrics, p, BLUE)
+			r := getDistance(contours, RED, xi, yi)
+			g := getDistance(contours, GREEN, xi, yi)
+			b := getDistance(contours, BLUE, xi, yi)
 
-			tex.Image().Set(x, flipY, color.RGBA{
-				normalizeColor(x, y, r),
-				normalizeColor(x, y, g),
-				normalizeColor(x, y, b),
-				255,
-			})
+			tex.Image().Set(x, flippedY, color.RGBA{r, g, b, 255})
 
 		}
 	}
 
 	if m.cfg.Debug {
-		for _, edge := range edges {
-			edge.Curve.Debug(dbg, edge.Color.RGB(), metrics)
+		for _, con := range contours {
+			for _, edge := range con.edges {
+				edge.Curve.Debug(dbg, edge.Color.RGB(), metrics)
+			}
 		}
 		dbg.Save(fmt.Sprintf("assets/%c_debug.png", r))
 
 	}
-
 	return tex
 }
 
-func normalizeColor(x, y int, c float64) uint8 {
-	// Standard MSDF encoding: negative distances (inside) = high values (white)
-	// Positive distances (outside) = low values (dark)
+func getDistance(contours []*Contour, c EdgeColor, x, y float64) uint8 {
+	var edgeDirectionVec *Vector
+	var winding ClockDirection
+	var x1, y1 float64
 
-	padNoise := float64((x*7+y*13)%100) / 100.0
-	noisy := (c + padNoise*0.3) / 1.3
-	noisy = math.Max(0, math.Min(1.0, noisy))
+	distance := math.MaxFloat64
 
-	return uint8(noisy * 255)
+	for _, con := range contours {
+
+		winding = con.winding
+		for _, edge := range con.edges {
+			if !edge.Color.Has(c) {
+				continue
+			}
+			d, xp, yp := edge.Curve.GetPsudoMinimumDistance(x, y)
+			if d < distance {
+				distance = d
+				edgeDirectionVec = edge.Curve.DirectionVec
+				x1 = xp
+				y1 = yp
+			}
+		}
+
+	}
+
+	fmt.Printf("distance: %f\n", distance)
+
+	pointVec := vec(x, y, x1, y1)
+
+	side := sign(edgeDirectionVec.cross(pointVec))
+
+	distance = side * float64(winding) * distance
+
+	distanceRange := 0.12
+
+	n := (distance / distanceRange) + 0.5
+	n = clamp(n, 0, 1)
+
+	return uint8(n * 255)
 }
