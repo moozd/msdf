@@ -4,11 +4,11 @@ import (
 	"image/color"
 )
 
-func (c1 *Curve) Debug(g *Glyph, color color.RGBA, scaler *Metrics) {
+func (curve *Curve) Debug(g *Glyph, color color.RGBA, scaler *Metrics) {
 	img := g.Image()
 	bounds := img.Bounds()
 
-	for i, p := range c1.Points {
+	for i, p := range curve.Points {
 		px, py := scaler.ToPixel(p)
 
 		if px < bounds.Min.X || px >= bounds.Max.X ||
@@ -16,7 +16,7 @@ func (c1 *Curve) Debug(g *Glyph, color color.RGBA, scaler *Metrics) {
 			continue
 		}
 
-		if i == len(c1.Points)-1 {
+		if i == len(curve.Points)-1 {
 			for dx := -1; dx <= 1; dx++ {
 				for dy := -4; dy <= 4; dy++ {
 					x, y := px+dx, py+dy

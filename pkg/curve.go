@@ -27,37 +27,41 @@ func NewCurve(def CurveDef) *Curve {
 	return b
 }
 
-func (c1 *Curve) IsConnected(c2 *Curve) bool {
+func (curve *Curve) IsConnected(c2 *Curve) bool {
 
-	N := len(c1.Points)
-	a := c1.Points[N-1]
+	N := len(curve.Points)
+	a := curve.Points[N-1]
 	s := c2.Points[0]
 
 	return (s == a)
 }
 
-func (c1 *Curve) doLowResolutionSampling() {
+func (curve *Curve) doLowResolutionSampling() {
 
 	for i := range 65 {
 		t := fixed.Int26_6(i)
-		p := c1.def.GetLowResSample(t)
-		c1.Points = append(c1.Points, p)
+		p := curve.def.GetLowResSample(t)
+		curve.Points = append(curve.Points, p)
 	}
 
-	x0, y0 := unpack_p26_6(c1.Points[0])
-	x1, y1 := unpack_p26_6(c1.Points[len(c1.Points)-1])
-	c1.DirectionVec = vec(x0, x1, y0, y1)
+	x0, y0 := unpack_p26_6(curve.Points[0])
+	x1, y1 := unpack_p26_6(curve.Points[len(curve.Points)-1])
+	curve.DirectionVec = vec(x0, x1, y0, y1)
 }
 
-func (c1 *Curve) GetPsudoMinimumDistance(xp, yp float64) (float64, float64, float64) {
-	switch s := c1.def.Params().(type) {
+func (curve *Curve) GetPsudoMinimumDistance(xp, yp float64) (float64, float64, float64) {
+	switch s := curve.def.Params().(type) {
 	case Line:
 
 		xp0, yp0 := unpack_p26_6(s.P0)
 		xp1, yp1 := unpack_p26_6(s.P1)
+
 		A := vec(xp0, yp0, xp, yp)
 		B := vec(xp0, yp0, xp1, yp1)
+
 		t := A.dot(B) / B.dot(B)
+		t = clamp(t, 0, 1)
+
 		cx := xp0 + t*(xp1-xp0)
 		cy := yp0 + t*(yp1-yp0)
 		C := vec(xp, yp, cx, cy)
@@ -68,6 +72,7 @@ func (c1 *Curve) GetPsudoMinimumDistance(xp, yp float64) (float64, float64, floa
 		return 0.0, 0.0, 0.0
 
 	case CubicBezier:
+
 		return 0.0, 0.0, 0.0
 
 	}
@@ -75,11 +80,11 @@ func (c1 *Curve) GetPsudoMinimumDistance(xp, yp float64) (float64, float64, floa
 	return 0.0, 0.0, 0.0
 }
 
-func (c1 *Curve) FindMinDistance(p0 fixed.Point26_6) (float64, fixed.Point26_6) {
+func (curve *Curve) FindMinDistance(p0 fixed.Point26_6) (float64, fixed.Point26_6) {
 	r := math.MaxFloat64
 	var p fixed.Point26_6
 
-	for _, p1 := range c1.Points {
+	for _, p1 := range curve.Points {
 		d := dist(p0, p1)
 		if d < r {
 			r = d

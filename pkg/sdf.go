@@ -111,8 +111,6 @@ func getDistance(contours []*Contour, c EdgeColor, x, y float64) uint8 {
 
 	}
 
-	fmt.Printf("distance: %f\n", distance)
-
 	pointVec := vec(x, y, x1, y1)
 
 	side := sign(edgeDirectionVec.cross(pointVec))

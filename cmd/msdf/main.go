@@ -15,9 +15,9 @@ func main() {
 		Debug:      true,
 	}
 
-	bank := []rune{'A'}
+	bank := []rune{'+'}
 
-	tex, _ := msdf.New("/home/mo/.local/share/fonts/FiraCode/FiraCodeNerdFont-Regular.ttf", cfg)
+	tex, _ := msdf.New("/Users/mohammad.mohammadzade/Library/Fonts/FiraCodeNerdFont-Regular.ttf", cfg)
 	for _, c := range bank {
 		fmt.Println(string(c))
 		glyph := tex.Get(c)

@@ -11,30 +11,33 @@ const (
 	RED   EdgeColor = 1 << 0 // = 1 (bit 0)
 	GREEN           = 1 << 1 // = 2 (bit 1)
 	BLUE            = 1 << 2 // = 4 (bit 2)
+	WHITE           = RED | GREEN | BLUE
 	CLEAR           = 0x00
 )
 
-func colorize(cons []*Contour) {
+func colorize(contours []*Contour) {
 
 	// each  edge will get a pair of colors
-	// adjacent ones will atleast have one color in common
-	colors := []EdgeColor{RED, GREEN, BLUE}
-	ci := 0
+	// adjacent ones will at least have one color in common
 
-	for i := range cons {
-		edges := cons[i].edges
-		for j := 1; j < len(edges); j += 1 {
-			a := edges[j-1]
-			b := edges[j]
-			ci = ci + 1
-			seed1 := colors[ci%3]
-			seed2 := colors[(ci+1)%3]
-			seed3 := colors[(ci+2)%3]
+	var current EdgeColor
 
-			if a.Curve.IsConnected(b.Curve) {
-				a.Color = seed1 | seed2
-				b.Color = seed1 | seed3
+	for _, contour := range contours {
+		edges := contour.edges
+		if len(edges) == 1 {
+			current = WHITE
+		} else {
+			current = RED | BLUE
+		}
+
+		for _, edge := range edges {
+			edge.Color = current
+			if current.Has(RED | GREEN) {
+				current = GREEN | BLUE
+			} else {
+				current = RED | GREEN
 			}
+
 		}
 	}
 
