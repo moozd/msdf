@@ -19,11 +19,6 @@ type Edge struct {
 	Curve *Curve
 }
 
-type Scaler struct {
-	bounds fixed.Rectangle26_6
-	config *Config
-}
-
 type EdgeColor byte
 
 const (
@@ -103,7 +98,7 @@ func assignColors(cons [][]*Edge) {
 	}
 }
 
-func (contours Contours) getSignedDistnace(c EdgeColor, p fixed.Point26_6) float64 {
+func (contours Contours) getSignedDistnace(metrics *Metrics, p fixed.Point26_6, c EdgeColor) float64 {
 
 	dst := math.MaxFloat64
 	winding := 0
@@ -125,14 +120,20 @@ func (contours Contours) getSignedDistnace(c EdgeColor, p fixed.Point26_6) float
 		}
 	}
 
+	// if dst > 0.5 {
+	// 	dst = -dst
+	// }
+
 	if winding%2 == 1 {
-		return -dst
+		dst = -dst
 	}
+	dst = metrics.Normalize(dst)
 
 	return dst
+
 }
 
-func (m *Msdf) getEdges(r rune) (Edges, *Scaler, error) {
+func (m *Msdf) getEdges(r rune) (Edges, *Metrics, error) {
 	var edges []Edge
 
 	ppem := fixed.I(12)
@@ -150,35 +151,7 @@ func (m *Msdf) getEdges(r rune) (Edges, *Scaler, error) {
 
 	var p0 fixed.Point26_6
 
-	bounds := fixed.Rectangle26_6{
-		Min: fixed.Point26_6{X: fixed.Int26_6(1 << 20), Y: fixed.Int26_6(1 << 20)},
-		Max: fixed.Point26_6{X: fixed.Int26_6(-1 << 20), Y: fixed.Int26_6(-1 << 20)},
-	}
-
-	// First pass: calculate bounds
-	for _, segment := range segments {
-		for _, arg := range segment.Args {
-			if arg.X < bounds.Min.X {
-				bounds.Min.X = arg.X
-			}
-			if arg.Y < bounds.Min.Y {
-				bounds.Min.Y = arg.Y
-			}
-			if arg.X > bounds.Max.X {
-				bounds.Max.X = arg.X
-			}
-			if arg.Y > bounds.Max.Y {
-				bounds.Max.Y = arg.Y
-			}
-		}
-	}
-
-	fmt.Printf("Glyph Coords: Y(%f,%f) X(%f,%f)\n",
-		unpack_i26_6(bounds.Min.Y),
-		unpack_i26_6(bounds.Max.Y),
-		unpack_i26_6(bounds.Min.X),
-		unpack_i26_6(bounds.Max.X),
-	)
+	metrics := NewMetrics(m.cfg, segments)
 
 	// Second pass: create edges
 	for _, segment := range segments {
@@ -219,39 +192,8 @@ func (m *Msdf) getEdges(r rune) (Edges, *Scaler, error) {
 
 	}
 
-	padding := pack_i26_6(0.9)
-	bounds.Min.X -= padding
-	bounds.Min.Y -= padding
-	bounds.Max.X += padding
-	bounds.Max.Y += padding
+	return edges, metrics, nil
 
-	scaler := &Scaler{bounds: bounds, config: m.cfg}
-	return edges, scaler, nil
-
-}
-
-func (e *Scaler) p2g(x, y int) fixed.Point26_6 {
-	rangeX := e.bounds.Max.X - e.bounds.Min.X
-	rangeY := e.bounds.Max.Y - e.bounds.Min.Y
-
-	fx := (fixed.I(x)*rangeX)/fixed.I(e.config.Advance) + e.bounds.Min.X
-	fy := e.bounds.Max.Y - (fixed.I(y)*rangeY)/fixed.I(e.config.LineHeight)
-
-	return fixed.Point26_6{
-		X: fx,
-		Y: fy,
-	}
-}
-
-func (e *Scaler) g2p(p fixed.Point26_6) (int, int) {
-	rangeX := e.bounds.Max.X - e.bounds.Min.X
-	rangeY := e.bounds.Max.Y - e.bounds.Min.Y
-
-	// Convert back from glyph coords to pixel coords
-	pixelX := ((p.X - e.bounds.Min.X) * fixed.I(e.config.Advance)) / rangeX
-	pixelY := ((p.Y - e.bounds.Min.Y) * fixed.I(e.config.LineHeight)) / rangeY
-
-	return pixelX.Round(), pixelY.Round()
 }
 
 func (e EdgeColor) RGB() color.RGBA {

@@ -3,6 +3,7 @@ package msdf
 import (
 	"fmt"
 	"image/color"
+	"math"
 	"os"
 
 	"golang.org/x/image/font/sfnt"
@@ -15,6 +16,7 @@ type Msdf struct {
 
 type Config struct {
 	LineHeight, Advance int
+	Padding             float64
 	Debug               bool
 }
 
@@ -50,23 +52,23 @@ func (m *Msdf) Get(r rune) *Glyph {
 	tex := NewGlyph(m.cfg)
 	dbg := NewGlyph(m.cfg)
 
-	edges, scaler, _ := m.getEdges(r)
+	edges, metrics, _ := m.getEdges(r)
 	contours := edges.getContours()
 
 	for y := range m.cfg.LineHeight {
 		for x := range m.cfg.Advance {
 
-			p := scaler.p2g(x, y)
+			p := metrics.ToNative(x, y)
 			flipY := m.cfg.LineHeight - 1 - y
 
-			r := contours.getSignedDistnace(RED, p)
-			g := contours.getSignedDistnace(GREEN, p)
-			b := contours.getSignedDistnace(BLUE, p)
+			r := contours.getSignedDistnace(metrics, p, RED)
+			g := contours.getSignedDistnace(metrics, p, GREEN)
+			b := contours.getSignedDistnace(metrics, p, BLUE)
 
 			tex.Image().Set(x, flipY, color.RGBA{
-				normalize(r),
-				normalize(g),
-				normalize(b),
+				normalizeColor(x, y, r),
+				normalizeColor(x, y, g),
+				normalizeColor(x, y, b),
 				255,
 			})
 
@@ -75,7 +77,7 @@ func (m *Msdf) Get(r rune) *Glyph {
 
 	if m.cfg.Debug {
 		for _, edge := range edges {
-			edge.Curve.Debug(dbg, edge.Color.RGB(), scaler)
+			edge.Curve.Debug(dbg, edge.Color.RGB(), metrics)
 		}
 		dbg.Save(fmt.Sprintf("assets/%c_debug.png", r))
 
@@ -84,16 +86,13 @@ func (m *Msdf) Get(r rune) *Glyph {
 	return tex
 }
 
-func normalize(c float64) uint8 {
+func normalizeColor(x, y int, c float64) uint8 {
 	// Standard MSDF encoding: negative distances (inside) = high values (white)
 	// Positive distances (outside) = low values (dark)
-	normalized := 128.0 - c*64.0
 
-	if normalized < 0 {
-		return 0
-	}
-	if normalized > 255 {
-		return 255
-	}
-	return uint8(normalized)
+	padNoise := float64((x*7+y*13)%100) / 100.0
+	noisy := (c + padNoise*0.3) / 1.3
+	noisy = math.Max(0, math.Min(1.0, noisy))
+
+	return uint8(noisy * 255)
 }

@@ -9,14 +9,15 @@ import (
 func main() {
 
 	cfg := &msdf.Config{
-		LineHeight: 100,
-		Advance:    100,
+		LineHeight: 250,
+		Advance:    250,
+		Padding:    0.5,
 		Debug:      true,
 	}
 
-	bank := []rune{'A', 'R', '@', 'C', 'B'}
+	bank := []rune{'A'}
 
-	tex, _ := msdf.New("/home/mo/.local/share/fonts/Hack/HackNerdFont-Regular.ttf", cfg)
+	tex, _ := msdf.New("/Users/mohammad.mohammadzade/Library/Fonts/FiraCodeNerdFont-Regular.ttf", cfg)
 	for _, c := range bank {
 
 		glyph := tex.Get(c)

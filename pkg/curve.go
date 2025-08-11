@@ -100,16 +100,13 @@ func (c1 *Curve) Cast(p fixed.Point26_6) int {
 		p1 := c1.Points[i]
 		p2 := c1.Points[i+1]
 
-		// Check if horizontal ray from point p crosses the line segment p1->p2
 		if (p1.Y > p.Y) != (p2.Y > p.Y) {
-			// Calculate X intersection point
 			intersectX := p1.X + (p.Y-p1.Y)*(p2.X-p1.X)/(p2.Y-p1.Y)
 			if intersectX > p.X {
-				// Ray crosses to the right, count it
 				if p2.Y > p1.Y {
-					winding += 1 // Upward crossing
+					winding += 1
 				} else {
-					winding -= 1 // Downward crossing
+					winding -= 1
 				}
 			}
 		}
