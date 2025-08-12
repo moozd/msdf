@@ -1,6 +1,7 @@
 package msdf
 
 import (
+	"fmt"
 	"math"
 
 	"golang.org/x/image/math/fixed"
@@ -43,4 +44,8 @@ func (v *Vector) fixed() fixed.Point26_6 {
 		X: pack_i26_6(v.X),
 		Y: pack_i26_6(v.Y),
 	}
+}
+
+func (v *Vector) String() string {
+	return fmt.Sprintf("vec[(%.3f, %.3f) d= %.3f] ", v.X, v.Y, v.dist())
 }

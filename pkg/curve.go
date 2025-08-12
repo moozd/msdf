@@ -1,6 +1,7 @@
 package msdf
 
 import (
+	"fmt"
 	"math"
 
 	"golang.org/x/image/math/fixed"
@@ -80,14 +81,17 @@ func (c *Curve) GetPsudoMinimumDistance(xp, yp float64) (float64, float64, float
 	return 0.0, 0.0, 0.0
 }
 
-func (c1 *Curve) IsCorner(c2 *Curve, threshold float64) bool {
+func (c1 *Curve) IsCorner(c2 *Curve, winding ClockDirection, threshold float64) bool {
 	v1 := c1.DirectionVec.normalize()
 	v2 := c2.DirectionVec.normalize()
 
-	dp := v1.dot(v2)
-	angle := math.Acos(clamp(dp, -1, 1))
+	dp := v1.dot(v2) / (v1.dist() * v2.dist())
+	angle := math.Acos(dp)
+
+	cs := v1.cross(v2)
 
 	deg := angle * 180 / math.Pi
+	fmt.Printf("Corner:%0.3f %-.2f %d\n", deg, cs, winding)
 	return deg < threshold
 
 }

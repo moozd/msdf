@@ -1,6 +1,8 @@
 package msdf
 
 import (
+	"image"
+
 	"golang.org/x/image/math/fixed"
 )
 
@@ -52,16 +54,18 @@ func (e *Metrics) ToFloat(x, y int) (float64, float64) {
 	return fx, fy
 }
 
-func (e *Metrics) ToPixel(p fixed.Point26_6) (int, int) {
+func (e *Metrics) Scale(p fixed.Point26_6, bounds image.Rectangle, padding int) (int, int) {
 	rangeX, rangeY := e.GetRange()
 
 	// Convert from glyph coords back to texture pixel coords
-	normalizedX := float64(p.X-e.bounds.Min.X) / rangeX
-	normalizedY := float64(e.bounds.Max.Y-p.Y) / rangeY
+	normalizedX := unpack_i26_6(p.X-e.bounds.Min.X) / rangeX
+	normalizedY := unpack_i26_6(p.Y-e.bounds.Min.Y) / rangeY
 
-	px := int(normalizedX * float64(e.config.width))
-	py := int(normalizedY * float64(e.config.height))
+	w := bounds.Max.X - bounds.Min.X - 2*padding
+	h := bounds.Max.Y - bounds.Min.Y - 2*padding
+
+	px := int(normalizedX*float64(w)) + bounds.Min.X + padding
+	py := int(normalizedY*float64(h)) + bounds.Min.Y + padding
 
 	return px, py
 }
-

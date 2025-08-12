@@ -9,6 +9,7 @@ import (
 )
 
 type Edge struct {
+	id    int
 	Kind  string
 	Color EdgeColor
 	Curve *Curve
@@ -24,6 +25,7 @@ func (m *Msdf) getEdges(r rune) ([]*Edge, error) {
 
 	var p0 fixed.Point26_6
 
+	idx := 0
 	for _, segment := range segments {
 		args := segment.Args
 		switch segment.Op {
@@ -32,12 +34,14 @@ func (m *Msdf) getEdges(r rune) ([]*Edge, error) {
 		case sfnt.SegmentOpLineTo:
 
 			edges = append(edges, &Edge{
+				id:    idx,
 				Kind:  "L",
 				Curve: NewCurve(&Line{P0: p0, P1: args[0]}),
 			})
 			p0 = args[0]
 		case sfnt.SegmentOpCubeTo:
 			edges = append(edges, &Edge{
+				id:   idx,
 				Kind: "C",
 				Curve: NewCurve(&CubicBezier{
 					P0: p0,
@@ -49,6 +53,7 @@ func (m *Msdf) getEdges(r rune) ([]*Edge, error) {
 			p0 = args[2]
 		case sfnt.SegmentOpQuadTo:
 			edges = append(edges, &Edge{
+				id:   idx,
 				Kind: "Q",
 				Curve: NewCurve(&QuadraticBezier{
 					P0: p0,
@@ -59,6 +64,7 @@ func (m *Msdf) getEdges(r rune) ([]*Edge, error) {
 			p0 = args[1]
 
 		}
+		idx += 1
 
 	}
 
@@ -81,7 +87,7 @@ func (m *Msdf) getVector(r rune) (sfnt.Segments, fixed.Rectangle26_6, error) {
 		return nil, fixed.Rectangle26_6{}, err
 	}
 
-	bounds, err := m.font.Bounds(&buff, ppem, font.HintingNone)
+	bounds, _, err := m.font.GlyphBounds(&buff, gi, ppem, font.HintingNone)
 	if err != nil {
 		return nil, fixed.Rectangle26_6{}, err
 	}
@@ -91,5 +97,5 @@ func (m *Msdf) getVector(r rune) (sfnt.Segments, fixed.Rectangle26_6, error) {
 }
 
 func (e *Edge) String() string {
-	return fmt.Sprintf("%s: %s", e.Kind, e.Color)
+	return fmt.Sprintf("%s%02d[%s] ", e.Kind, e.id, e.Color)
 }

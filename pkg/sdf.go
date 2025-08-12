@@ -16,7 +16,7 @@ type Msdf struct {
 
 type Config struct {
 	height, width int
-	Padding       float64
+	Scale         float64
 	Debug         bool
 }
 
@@ -49,14 +49,12 @@ func (m *Msdf) Get(r rune) *Glyph {
 	w, h := metrics.GetRange()
 
 	minSize := 64
-	scale := 2.0
-	m.cfg.height = max(int(h*scale), minSize) + int(m.cfg.Padding*10)
-	m.cfg.width = max(int(w*scale), minSize) + int(m.cfg.Padding*10)
+	m.cfg.height = max(int(h), minSize) + int(m.cfg.Scale*100)
+	m.cfg.width = max(int(w), minSize) + int(m.cfg.Scale*100)
 
-	tex := NewGlyph(m.cfg)
-	dbg := NewGlyph(m.cfg)
+	tex := NewGlyph(m.cfg.width, m.cfg.height)
 
-	fmt.Println(m.cfg)
+	fmt.Printf("h:%d,w:%d\n", m.cfg.height, m.cfg.width)
 
 	for i, con := range contours {
 		fmt.Printf("con: %d, dir: %v\n", i+1, con.winding)
@@ -67,24 +65,21 @@ func (m *Msdf) Get(r rune) *Glyph {
 
 			xi, yi := metrics.ToFloat(x, y)
 			flippedY := m.cfg.height - 1 - y
-			fmt.Printf("%f,%f\n", xi, yi)
 
-			r := uint8(250) //getDistance(m.cfg, contours, RED, xi, yi)
-			g := uint8(250) //getDistance(m.cfg, contours, GREEN, xi, yi)
-			b := uint8(25)  //getDistance(m.cfg, contours, BLUE, xi, yi)
+			r := getDistance(m.cfg, contours, RED, xi, yi)
+			g := getDistance(m.cfg, contours, GREEN, xi, yi)
+			b := getDistance(m.cfg, contours, BLUE, xi, yi)
 
 			tex.Image().Set(x, flippedY, color.RGBA{r, g, b, 255})
 
 		}
 
-		fmt.Println()
 	}
 
 	if m.cfg.Debug {
+		dbg := NewGlyph(512, 512)
 		for _, con := range contours {
-			for _, edge := range con.edges {
-				edge.Curve.Debug(dbg, edge.Color.RGB(), metrics)
-			}
+			con.Debug(dbg, metrics)
 		}
 		dbg.Save(fmt.Sprintf("assets/%c_debug.png", r))
 
@@ -134,7 +129,7 @@ func getDistance(cfg *Config, contours []*Contour, c EdgeColor, x, y float64) ui
 
 	distance = side * w * distance
 	pixelSize := math.Min(float64(cfg.width), float64(cfg.height))
-	distanceRange := (2.0 / pixelSize) * 100
+	distanceRange := (2.0 / pixelSize) * (cfg.Scale * 50)
 
 	normalized := (distance / distanceRange) + 0.5
 	clamped := clamp(normalized, 0, 1)

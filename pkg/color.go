@@ -3,6 +3,7 @@ package msdf
 import (
 	"fmt"
 	"image/color"
+	"strings"
 )
 
 type EdgeColor byte
@@ -17,17 +18,22 @@ const (
 
 func colorize(contours []*Contour) {
 
-	for _, contour := range contours {
+	for k, contour := range contours {
 
+		fmt.Printf("Contour: %d\n", k+1)
 		edges := contour.edges
 		for i, edge := range edges {
-			// nextEdge := edges[(i+1)%len(edges)]
-			//
-			// // Check if this edge is part of a sharp corner
-			// isSharpCorner := edge.Curve.IsCorner(nextEdge.Curve, 135)
-			//
+			nextEdge := edges[(i+1)%len(edges)]
+
+			// Check if this edge is part of a sharp corner
+			isSharpCorner := edge.Curve.IsCorner(nextEdge.Curve, contour.winding, 136)
+
+			if isSharpCorner {
+				fmt.Printf("%v , %v  %v\n", edge, nextEdge, contour.winding)
+			}
+
 			// if isSharpCorner {
-			// 	edge.Color = []EdgeColor{RED, GREEN, BLUE}[i%3]
+			// 	edge.Color = []EdgeColor{RED | BLUE, GREEN | BLUE, RED | GREEN}[i%3]
 			// } else {
 			edge.Color = []EdgeColor{RED | GREEN, RED | BLUE, GREEN | BLUE}[i%3]
 			// }
@@ -59,25 +65,23 @@ func (e EdgeColor) Has(color EdgeColor) bool {
 }
 
 func (e EdgeColor) String() string {
-	str := ""
 	isRed := e&RED == RED
 	isGreen := e&GREEN == GREEN
 	isBlue := e&BLUE == BLUE
 
+	colors := []string{"-", "-", "-"}
+
 	if isRed {
-		str = fmt.Sprintf("%s RED", str)
+		colors[0] = "R"
 	}
 
 	if isGreen {
-		str = fmt.Sprintf("%s GREEN", str)
+		colors[1] = "G"
 	}
 
 	if isBlue {
-		str = fmt.Sprintf("%s BLUE", str)
+		colors[2] = "B"
 	}
 
-	if e == CLEAR {
-		return "CLEAR"
-	}
-	return str
+	return strings.Join(colors, " ")
 }

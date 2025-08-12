@@ -10,15 +10,12 @@ import (
 
 type Glyph struct {
 	img *image.RGBA
-	cfg *Config
 }
 
-func NewGlyph(cfg *Config) *Glyph {
-	o := &Glyph{
-		cfg: cfg,
-	}
+func NewGlyph(height, width int) *Glyph {
+	o := &Glyph{}
 
-	o.img = image.NewRGBA(image.Rect(0, 0, o.cfg.width, o.cfg.height))
+	o.img = image.NewRGBA(image.Rect(0, 0, width, height))
 	bg := &image.Uniform{color.RGBA{0, 0, 0, 255}}
 	draw.Draw(o.img, o.img.Bounds(), bg, image.Point{}, draw.Src)
 
