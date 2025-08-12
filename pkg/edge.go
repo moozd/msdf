@@ -3,6 +3,7 @@ package msdf
 import (
 	"fmt"
 
+	"golang.org/x/image/font"
 	"golang.org/x/image/font/sfnt"
 	"golang.org/x/image/math/fixed"
 )
@@ -16,7 +17,7 @@ type Edge struct {
 func (m *Msdf) getEdges(r rune) ([]*Edge, error) {
 	var edges []*Edge
 
-	segments, err := m.getSegments(r)
+	segments, _, err := m.getVector(r)
 	if err != nil {
 		return nil, err
 	}
@@ -65,22 +66,27 @@ func (m *Msdf) getEdges(r rune) ([]*Edge, error) {
 
 }
 
-func (m *Msdf) getSegments(r rune) (sfnt.Segments, error) {
+func (m *Msdf) getVector(r rune) (sfnt.Segments, fixed.Rectangle26_6, error) {
 
 	ppem := fixed.I(12)
 
 	var buff sfnt.Buffer
 	gi, err := m.font.GlyphIndex(&buff, r)
 	if err != nil {
-		return nil, err
+		return nil, fixed.Rectangle26_6{}, err
 	}
 
 	segments, err := m.font.LoadGlyph(&buff, gi, ppem, nil)
 	if err != nil {
-		return nil, err
+		return nil, fixed.Rectangle26_6{}, err
 	}
 
-	return segments, nil
+	bounds, err := m.font.Bounds(&buff, ppem, font.HintingNone)
+	if err != nil {
+		return nil, fixed.Rectangle26_6{}, err
+	}
+
+	return segments, bounds, nil
 
 }
 

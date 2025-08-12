@@ -18,7 +18,7 @@ func NewGlyph(cfg *Config) *Glyph {
 		cfg: cfg,
 	}
 
-	o.img = image.NewRGBA(image.Rect(0, 0, o.cfg.Advance, o.cfg.LineHeight))
+	o.img = image.NewRGBA(image.Rect(0, 0, o.cfg.width, o.cfg.height))
 	bg := &image.Uniform{color.RGBA{0, 0, 0, 255}}
 	draw.Draw(o.img, o.img.Bounds(), bg, image.Point{}, draw.Src)
 

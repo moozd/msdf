@@ -29,6 +29,15 @@ func (v *Vector) dist() float64 {
 	return math.Sqrt(v.X*v.X + v.Y*v.Y)
 }
 
+func (v *Vector) normalize() *Vector {
+	l := v.dist()
+	return &Vector{
+		X: v.X / l,
+		Y: v.Y / l,
+	}
+
+}
+
 func (v *Vector) fixed() fixed.Point26_6 {
 	return fixed.Point26_6{
 		X: pack_i26_6(v.X),

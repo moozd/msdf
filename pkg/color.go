@@ -17,27 +17,20 @@ const (
 
 func colorize(contours []*Contour) {
 
-	// each  edge will get a pair of colors
-	// adjacent ones will at least have one color in common
-
-	var current EdgeColor
-
 	for _, contour := range contours {
+
 		edges := contour.edges
-		if len(edges) == 1 {
-			current = WHITE
-		} else {
-			current = RED | BLUE
-		}
-
-		for _, edge := range edges {
-			edge.Color = current
-			if current.Has(RED | GREEN) {
-				current = GREEN | BLUE
-			} else {
-				current = RED | GREEN
-			}
-
+		for i, edge := range edges {
+			// nextEdge := edges[(i+1)%len(edges)]
+			//
+			// // Check if this edge is part of a sharp corner
+			// isSharpCorner := edge.Curve.IsCorner(nextEdge.Curve, 135)
+			//
+			// if isSharpCorner {
+			// 	edge.Color = []EdgeColor{RED, GREEN, BLUE}[i%3]
+			// } else {
+			edge.Color = []EdgeColor{RED | GREEN, RED | BLUE, GREEN | BLUE}[i%3]
+			// }
 		}
 	}
 

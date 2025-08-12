@@ -66,9 +66,9 @@ func newContour(edges []*Edge) *Contour {
 
 	s := unpack_i26_6(signedArea(points))
 	if s > 0 {
-		winding = CW
-	} else {
 		winding = CCW
+	} else {
+		winding = CW
 	}
 
 	return &Contour{

@@ -1,7 +1,6 @@
 package msdf
 
 import (
-	"golang.org/x/image/font/sfnt"
 	"golang.org/x/image/math/fixed"
 )
 
@@ -12,86 +11,57 @@ type Metrics struct {
 
 func (m *Msdf) getMetrics(r rune) (*Metrics, error) {
 
-	segments, err := m.getSegments(r)
+	_, bounds, err := m.getVector(r)
 	if err != nil {
 		return nil, err
 	}
-	metrics := newMetrics(m.cfg, segments)
+	metrics := newMetrics(m.cfg, bounds)
 	return metrics, nil
 }
 
-func newMetrics(cfg *Config, segments sfnt.Segments) *Metrics {
-
+func newMetrics(cfg *Config, bounds fixed.Rectangle26_6) *Metrics {
 	m := &Metrics{}
-	bounds := fixed.Rectangle26_6{
-		Min: fixed.Point26_6{X: fixed.Int26_6(1 << 20), Y: fixed.Int26_6(1 << 20)},
-		Max: fixed.Point26_6{X: fixed.Int26_6(-1 << 20), Y: fixed.Int26_6(-1 << 20)},
-	}
 
-	for _, segment := range segments {
-		for _, arg := range segment.Args {
-			if arg.X < bounds.Min.X {
-				bounds.Min.X = arg.X
-			}
-			if arg.Y < bounds.Min.Y {
-				bounds.Min.Y = arg.Y
-			}
-			if arg.X > bounds.Max.X {
-				bounds.Max.X = arg.X
-			}
-			if arg.Y > bounds.Max.Y {
-				bounds.Max.Y = arg.Y
-			}
-		}
-	}
-
-	padding := pack_i26_6(cfg.Padding)
-	bounds.Min.X -= padding
-	bounds.Min.Y -= padding
-	bounds.Max.X += padding
-	bounds.Max.Y += padding
-
+	// Store original glyph bounds without padding
 	m.bounds = bounds
 	m.config = cfg
 
 	return m
 }
 
-func (e *Metrics) GetRange() (fixed.Int26_6, fixed.Int26_6) {
-
+func (e *Metrics) GetRange() (float64, float64) {
+	// Return the original glyph dimensions
 	rangeX := e.bounds.Max.X - e.bounds.Min.X
 	rangeY := e.bounds.Max.Y - e.bounds.Min.Y
 
-	return rangeX, rangeY
-}
-
-func (e *Metrics) ToP26_6(x, y int) fixed.Point26_6 {
-	rangeX, rangeY := e.GetRange()
-
-	fx := (fixed.I(x)*rangeX)/fixed.I(e.config.Advance) + e.bounds.Min.X
-	fy := e.bounds.Max.Y - (fixed.I(y)*rangeY)/fixed.I(e.config.LineHeight)
-
-	return fixed.Point26_6{
-		X: fx,
-		Y: fy,
-	}
+	return unpack_i26_6(rangeX), unpack_i26_6(rangeY)
 }
 
 func (e *Metrics) ToFloat(x, y int) (float64, float64) {
-	MX, MY := e.GetRange()
-	rangeX, rangeY := unpack_i26_6(MX), unpack_i26_6(MY)
+	// Simple linear mapping from texture space to glyph coordinate space
+	rangeX, rangeY := e.GetRange()
 
-	fx := (float64(x)*rangeX)/float64(e.config.Advance) + unpack_i26_6(e.bounds.Min.X)
-	fy := unpack_i26_6(e.bounds.Max.Y) - (float64(y)*rangeY)/float64(e.config.LineHeight)
+	// Normalize texture coordinates [0, width] -> [0, 1] -> glyph bounds
+	normalizedX := float64(x) / float64(e.config.width)
+	normalizedY := float64(y) / float64(e.config.height)
+
+	// Map to glyph coordinate space
+	fx := unpack_i26_6(e.bounds.Min.X) + normalizedX*rangeX
+	fy := unpack_i26_6(e.bounds.Max.Y) - normalizedY*rangeY
+
 	return fx, fy
 }
 
 func (e *Metrics) ToPixel(p fixed.Point26_6) (int, int) {
 	rangeX, rangeY := e.GetRange()
 
-	// Convert back from glyph coords to pixel coords
-	px := ((p.X - e.bounds.Min.X) * fixed.I(e.config.Advance)) / rangeX
-	py := ((p.Y - e.bounds.Min.Y) * fixed.I(e.config.LineHeight)) / rangeY
+	// Convert from glyph coords back to texture pixel coords
+	normalizedX := float64(p.X-e.bounds.Min.X) / rangeX
+	normalizedY := float64(e.bounds.Max.Y-p.Y) / rangeY
 
-	return px.Round(), py.Round()
+	px := int(normalizedX * float64(e.config.width))
+	py := int(normalizedY * float64(e.config.height))
+
+	return px, py
 }
+

@@ -27,30 +27,30 @@ func NewCurve(def CurveDef) *Curve {
 	return b
 }
 
-func (curve *Curve) IsConnected(c2 *Curve) bool {
+func (c *Curve) IsConnected(c2 *Curve) bool {
 
-	N := len(curve.Points)
-	a := curve.Points[N-1]
+	N := len(c.Points)
+	a := c.Points[N-1]
 	s := c2.Points[0]
 
 	return (s == a)
 }
 
-func (curve *Curve) doLowResolutionSampling() {
+func (c *Curve) doLowResolutionSampling() {
 
 	for i := range 65 {
 		t := fixed.Int26_6(i)
-		p := curve.def.GetLowResSample(t)
-		curve.Points = append(curve.Points, p)
+		p := c.def.GetLowResSample(t)
+		c.Points = append(c.Points, p)
 	}
 
-	x0, y0 := unpack_p26_6(curve.Points[0])
-	x1, y1 := unpack_p26_6(curve.Points[len(curve.Points)-1])
-	curve.DirectionVec = vec(x0, x1, y0, y1)
+	x0, y0 := unpack_p26_6(c.Points[0])
+	x1, y1 := unpack_p26_6(c.Points[len(c.Points)-1])
+	c.DirectionVec = vec(x0, y0, x1, y1)
 }
 
-func (curve *Curve) GetPsudoMinimumDistance(xp, yp float64) (float64, float64, float64) {
-	switch s := curve.def.Params().(type) {
+func (c *Curve) GetPsudoMinimumDistance(xp, yp float64) (float64, float64, float64) {
+	switch s := c.def.Params().(type) {
 	case Line:
 
 		xp0, yp0 := unpack_p26_6(s.P0)
@@ -80,11 +80,23 @@ func (curve *Curve) GetPsudoMinimumDistance(xp, yp float64) (float64, float64, f
 	return 0.0, 0.0, 0.0
 }
 
-func (curve *Curve) FindMinDistance(p0 fixed.Point26_6) (float64, fixed.Point26_6) {
+func (c1 *Curve) IsCorner(c2 *Curve, threshold float64) bool {
+	v1 := c1.DirectionVec.normalize()
+	v2 := c2.DirectionVec.normalize()
+
+	dp := v1.dot(v2)
+	angle := math.Acos(clamp(dp, -1, 1))
+
+	deg := angle * 180 / math.Pi
+	return deg < threshold
+
+}
+
+func (c *Curve) FindMinDistance(p0 fixed.Point26_6) (float64, fixed.Point26_6) {
 	r := math.MaxFloat64
 	var p fixed.Point26_6
 
-	for _, p1 := range curve.Points {
+	for _, p1 := range c.Points {
 		d := dist(p0, p1)
 		if d < r {
 			r = d

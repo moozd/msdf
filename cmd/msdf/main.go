@@ -9,13 +9,11 @@ import (
 func main() {
 
 	cfg := &msdf.Config{
-		LineHeight: 250,
-		Advance:    250,
-		Padding:    0.5,
-		Debug:      true,
+		Padding: 0.1,
+		Debug:   true,
 	}
 
-	bank := []rune{'+'}
+	bank := []rune{'A', 'x', '+', '='}
 
 	tex, _ := msdf.New("/Users/mohammad.mohammadzade/Library/Fonts/FiraCodeNerdFont-Regular.ttf", cfg)
 	for _, c := range bank {
