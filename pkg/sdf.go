@@ -54,12 +54,6 @@ func (m *Msdf) Get(r rune) *Glyph {
 
 	tex := NewGlyph(m.cfg.width, m.cfg.height)
 
-	fmt.Printf("h:%d,w:%d\n", m.cfg.height, m.cfg.width)
-
-	for i, con := range contours {
-		fmt.Printf("con: %d, dir: %v\n", i+1, con.winding)
-	}
-
 	for y := range m.cfg.height {
 		for x := range m.cfg.width {
 

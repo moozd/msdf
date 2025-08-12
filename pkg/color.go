@@ -19,24 +19,23 @@ const (
 func colorize(contours []*Contour) {
 
 	for k, contour := range contours {
-
+		fmt.Println()
 		fmt.Printf("Contour: %d\n", k+1)
 		edges := contour.edges
+		n := len(edges)
+
+		for i := range n {
+			nextIdx := (i + 1) % n
+			isSharp, deg := edges[i].Curve.IsCorner(edges[nextIdx].Curve, contour.winding, 136)
+			fmt.Printf("%v->%v: isSharp: %-8t angle: %-8.2f deg\n", edges[i], edges[nextIdx], isSharp, deg)
+		}
+
 		for i, edge := range edges {
-			nextEdge := edges[(i+1)%len(edges)]
+			edge.Color = []EdgeColor{RED | GREEN, GREEN | BLUE, BLUE | RED}[i%3]
+		}
 
-			// Check if this edge is part of a sharp corner
-			isSharpCorner := edge.Curve.IsCorner(nextEdge.Curve, contour.winding, 136)
-
-			if isSharpCorner {
-				fmt.Printf("%v , %v  %v\n", edge, nextEdge, contour.winding)
-			}
-
-			// if isSharpCorner {
-			// 	edge.Color = []EdgeColor{RED | BLUE, GREEN | BLUE, RED | GREEN}[i%3]
-			// } else {
-			edge.Color = []EdgeColor{RED | GREEN, RED | BLUE, GREEN | BLUE}[i%3]
-			// }
+		for _, edge := range edges {
+			fmt.Printf("%v\n", edge)
 		}
 	}
 

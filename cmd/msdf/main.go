@@ -13,7 +13,7 @@ func main() {
 		Debug: true,
 	}
 
-	bank := []rune{'X'}
+	bank := []rune{'A'}
 
 	msdfgen, _ := msdf.New("/home/mo/.local/share/fonts/FiraCode/FiraCodeNerdFont-Regular.ttf", cfg)
 	for _, c := range bank {
