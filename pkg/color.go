@@ -1,7 +1,6 @@
 package msdf
 
 import (
-	"fmt"
 	"image/color"
 	"strings"
 )
@@ -18,9 +17,9 @@ const (
 
 func colorize(contours []*Contour) {
 
-	for k, contour := range contours {
-		fmt.Println()
-		fmt.Printf("Contour: %d\n", k+1)
+	for _, contour := range contours {
+		// fmt.Println()
+		// fmt.Printf("Contour: %d\n", k+1)
 		edges := contour.edges
 		n := len(edges)
 
@@ -29,8 +28,8 @@ func colorize(contours []*Contour) {
 		}
 		for i := range n {
 			nextIdx := (i + 1) % n
-			isSharp, deg := edges[i].Curve.IsCorner(edges[nextIdx].Curve, contour.winding, 136)
-			fmt.Printf("%v->%v: isSharp: %-8t angle: %-8.2f winding: %-8v \n", edges[i], edges[nextIdx], isSharp, deg, contour.winding)
+			// isSharp, deg := edges[i].Curve.IsCorner(edges[nextIdx].Curve, contour.winding, 136)
+			// fmt.Printf("%v->%v: isSharp: %-8t angle: %-8.2f winding: %-8v \n", edges[i], edges[nextIdx], isSharp, deg, contour.winding)
 
 			this := edges[i]
 			next := edges[nextIdx]
@@ -41,9 +40,6 @@ func colorize(contours []*Contour) {
 
 		}
 
-		for _, edge := range edges {
-			fmt.Printf("%v\n", edge)
-		}
 	}
 
 }
