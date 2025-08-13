@@ -2,15 +2,13 @@ package msdf
 
 import (
 	"fmt"
-
-	"golang.org/x/image/math/fixed"
 )
 
 type ClockDirection int
 
 const (
 	CW  ClockDirection = 1
-	CCW ClockDirection = -1
+	CCW ClockDirection = 0
 )
 
 type Contour struct {
@@ -57,23 +55,20 @@ func (m *Msdf) getContours(r rune) ([]*Contour, error) {
 }
 
 func newContour(edges []*Edge) *Contour {
-	var winding ClockDirection
-	var points []fixed.Point26_6
 
+	signedAreas := 0.0
 	for _, edge := range edges {
-		points = append(points, edge.Curve.Points...)
+		signedAreas += edge.Curve.GetSignedArea()
 	}
 
-	s := unpack_i26_6(signedArea(points))
-	if s > 0 {
-		winding = CW
-	} else {
-		winding = CCW
+	w := CCW
+	if signedAreas > 0 {
+		w = CW
 	}
 
 	return &Contour{
 		edges:   edges,
-		winding: winding,
+		winding: w,
 	}
 }
 

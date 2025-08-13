@@ -60,9 +60,9 @@ func (m *Msdf) Get(r rune) *Glyph {
 			xi, yi := metrics.ToFloat(x, y)
 			flippedY := m.cfg.height - 1 - y
 
-			r := getDistance(m.cfg, contours, RED, xi, yi)
-			g := getDistance(m.cfg, contours, GREEN, xi, yi)
-			b := getDistance(m.cfg, contours, BLUE, xi, yi)
+			r := getChannel(m.cfg, contours, RED, xi, yi)
+			g := getChannel(m.cfg, contours, GREEN, xi, yi)
+			b := getChannel(m.cfg, contours, BLUE, xi, yi)
 
 			tex.Image().Set(x, flippedY, color.RGBA{r, g, b, 255})
 
@@ -81,49 +81,45 @@ func (m *Msdf) Get(r rune) *Glyph {
 	return tex
 }
 
-func getDistance(cfg *Config, contours []*Contour, c EdgeColor, x, y float64) uint8 {
-	var edgeDirectionVec *Vector
-	var winding ClockDirection
-	var x1, y1 float64
+func getChannel(cfg *Config, contours []*Contour, c EdgeColor, x, y float64) uint8 {
+
+	var A *Vector
+	var B *Vector
 	found := false
-
-	distance := math.MaxFloat64
-
+	minDist := math.MaxFloat32
 	for _, con := range contours {
-
 		for _, edge := range con.edges {
+			curve := edge.Curve
 			if !edge.Color.Has(c) {
 				continue
 			}
-			d, xp, yp := edge.Curve.GetPsudoMinimumDistance(x, y)
-			if d < distance {
-				winding = con.winding
-				distance = d
-				edgeDirectionVec = edge.Curve.DirectionVec
-				x1 = xp
-				y1 = yp
-				found = true
-			}
-		}
 
+			for t := 0.0; t <= 1; t += 0.01 {
+
+				p := curve.PointAt(t)
+				a := vec(p.X, p.Y, x, y)
+
+				if a.Distance() < minDist {
+					found = true
+					minDist = a.Distance()
+
+					A = a
+					s := curve.TangentAt(t)
+					B = vec(0, 0, s.X, s.Y)
+				}
+			}
+
+		}
 	}
 
 	if !found {
-		return 128
+		return 127
 	}
 
-	pointVec := vec(x1, y1, x, y)
+	distance := sign(B.Cross(A)) * (minDist)
 
-	side := sign(edgeDirectionVec.cross(pointVec))
-
-	w := 1.0
-	if winding == 0 {
-		w = -1.0
-	}
-
-	distance = side * w * distance
 	pixelSize := math.Min(float64(cfg.width), float64(cfg.height))
-	distanceRange := (2.0 / pixelSize) * (cfg.Scale * 50)
+	distanceRange := (2.0 / pixelSize) * 120
 
 	normalized := (distance / distanceRange) + 0.5
 	clamped := clamp(normalized, 0, 1)

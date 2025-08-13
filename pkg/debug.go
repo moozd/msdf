@@ -14,12 +14,12 @@ func (c *Contour) Debug(g *Glyph, m *Metrics) {
 	count := 0
 	for _, edge := range c.edges {
 
-		curve := edge.Curve
+		points := edge.Curve.GetLowResPoints()
 		c := edge.Color.RGB()
 		img := g.Image()
 		bounds := img.Bounds()
 
-		for i, p := range curve.Points {
+		for i, p := range points {
 			px, py := m.Scale(p, bounds, 40)
 
 			if px < bounds.Min.X || px >= bounds.Max.X ||
@@ -28,7 +28,7 @@ func (c *Contour) Debug(g *Glyph, m *Metrics) {
 			}
 
 			// Draw label at center of curve
-			if i == len(curve.Points)/2 {
+			if i == len(points)/2 {
 				d := &font.Drawer{
 					Dst:  img,
 					Src:  image.NewUniform(color.White),
@@ -40,7 +40,7 @@ func (c *Contour) Debug(g *Glyph, m *Metrics) {
 				count += 1
 			}
 
-			if i == len(curve.Points)-1 {
+			if i == len(points)-1 {
 				for dx := -2; dx <= 2; dx++ {
 					for dy := -2; dy <= 2; dy++ {
 						x, y := px+dx, py+dy

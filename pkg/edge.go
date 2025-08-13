@@ -12,7 +12,7 @@ type Edge struct {
 	id    int
 	Kind  string
 	Color EdgeColor
-	Curve *Curve
+	Curve Curve
 }
 
 func (m *Msdf) getEdges(r rune) ([]*Edge, error) {
@@ -36,30 +36,21 @@ func (m *Msdf) getEdges(r rune) ([]*Edge, error) {
 			edges = append(edges, &Edge{
 				id:    idx,
 				Kind:  "L",
-				Curve: NewCurve(&Line{P0: p0, P1: args[0]}),
+				Curve: NewLine(p0, args[0]),
 			})
 			p0 = args[0]
 		case sfnt.SegmentOpCubeTo:
 			edges = append(edges, &Edge{
-				id:   idx,
-				Kind: "C",
-				Curve: NewCurve(&CubicBezier{
-					P0: p0,
-					P1: args[0],
-					P2: args[1],
-					P3: args[2],
-				}),
+				id:    idx,
+				Kind:  "C",
+				Curve: NewCubicBezier(p0, args[0], args[1], args[2]),
 			})
 			p0 = args[2]
 		case sfnt.SegmentOpQuadTo:
 			edges = append(edges, &Edge{
-				id:   idx,
-				Kind: "Q",
-				Curve: NewCurve(&QuadraticBezier{
-					P0: p0,
-					P1: args[0],
-					P2: args[1],
-				}),
+				id:    idx,
+				Kind:  "Q",
+				Curve: NewQuadraticBezier(p0, args[0], args[1]),
 			})
 			p0 = args[1]
 

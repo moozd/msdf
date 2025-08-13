@@ -24,14 +24,21 @@ func colorize(contours []*Contour) {
 		edges := contour.edges
 		n := len(edges)
 
+		for i, edge := range edges {
+			edge.Color = []EdgeColor{RED | GREEN, GREEN | BLUE, BLUE | RED}[i%3]
+		}
 		for i := range n {
 			nextIdx := (i + 1) % n
 			isSharp, deg := edges[i].Curve.IsCorner(edges[nextIdx].Curve, contour.winding, 136)
-			fmt.Printf("%v->%v: isSharp: %-8t angle: %-8.2f deg\n", edges[i], edges[nextIdx], isSharp, deg)
-		}
+			fmt.Printf("%v->%v: isSharp: %-8t angle: %-8.2f winding: %-8v \n", edges[i], edges[nextIdx], isSharp, deg, contour.winding)
 
-		for i, edge := range edges {
-			edge.Color = []EdgeColor{RED | GREEN, GREEN | BLUE, BLUE | RED}[i%3]
+			this := edges[i]
+			next := edges[nextIdx]
+
+			if (this.Kind == "Q" || this.Kind == "C") && next.Kind != "L" {
+				next.Color = WHITE
+			}
+
 		}
 
 		for _, edge := range edges {

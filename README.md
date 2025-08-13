@@ -31,11 +31,10 @@ For each pixel in the output texture:
 
 | Character | MSDF Output               | Debug Visualization            |
 | --------- | ------------------------- | ------------------------------ |
-| **A**     | ![A](assets/A.png)        | ![A Debug](assets/A_debug.png) |
+| **S**     | ![S](assets/S.png)        | ![S Debug](assets/S_debug.png) |
 | **R**     | ![R](assets/R.png)        | ![R Debug](assets/R_debug.png) |
-| **@**     | ![@ Symbol](assets/@.png) | ![@ Debug](assets/@_debug.png) |
-| **C**     | ![C](assets/C.png)        | ![C Debug](assets/C_debug.png) |
-| **B**     | ![B](assets/B.png)        | ![B Debug](assets/B_debug.png) |
+| **5**     | ![5](assets/5.png)        | ![5 Debug](assets/5_debug.png) |
+| **+**     | ![+ Symbol](assets/+.png) | ![+ Debug](assets/+_debug.png) |
 
 ### Debug Visualizations Explained
 
@@ -81,16 +80,18 @@ import (
 
 func main() {
     cfg := &msdf.Config{
-        LineHeight: 512,
-        Advance:    512,
-        Debug:      true,  // Generate debug visualizations
+        Scale: 0.5,
+        Debug: true,  // Generate debug visualizations
     }
 
     generator, _ := msdf.New("/path/to/font.ttf", cfg)
 
-    // Generate MSDF for character 'A'
-    glyph := generator.Get('A')
-    glyph.Save("A.png")
+    // Generate MSDF for multiple characters
+    bank := []rune{'S', 'R', '5', '+'}
+    for _, c := range bank {
+        glyph := generator.Get(c)
+        glyph.Save(fmt.Sprintf("assets/%c.png", c))
+    }
 }
 ```
 
