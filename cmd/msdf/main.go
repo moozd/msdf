@@ -43,27 +43,42 @@ func init() {
 				os.Exit(1)
 			}
 
-			cfg := &msdf.Config{}
+			debug, err := cmd.Flags().GetBool("debug")
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
 			char := []rune(c)[0]
 			fontFile, err := homedir.Expand(addr)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			msdfgen, _ := msdf.New(fontFile, cfg)
-			s := msdfgen.Get(char)
 			outDir, err := homedir.Expand(output)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+
+			debugPath := ""
+			if debug {
+				debugPath = outDir
+			}
+			cfg := &msdf.Config{
+				Debug: debugPath,
+			}
+			msdfgen, _ := msdf.New(fontFile, cfg)
+			s := msdfgen.Get(char)
+
 			s.Save(filepath.Join(outDir, fmt.Sprintf("%c.png", char)))
 
 		},
 	}
-	glyphCmd.Flags().String("font", "", "Font path.")
-	glyphCmd.Flags().String("char", "", "Character.")
-	glyphCmd.Flags().String("out", ".", "Output dir path.")
+	glyphCmd.Flags().StringP("font", "f", "", "Font path.")
+	glyphCmd.Flags().StringP("char", "c", "", "Character.")
+	glyphCmd.Flags().StringP("out", "o", ".", "Output dir path.")
+	glyphCmd.Flags().BoolP("debug", "d", false, "Generate Debug output to see the edge coloring")
 
 	rootCmd.AddCommand(glyphCmd)
 }

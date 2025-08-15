@@ -17,6 +17,10 @@ const (
 
 func colorize(contours []*Contour) {
 
+	si := 0
+	bank := []EdgeColor{RED | GREEN, GREEN | BLUE, BLUE | RED}
+	current := bank[0]
+
 	for _, contour := range contours {
 		// fmt.Println()
 		// fmt.Printf("Contour: %d\n", k+1)
@@ -35,7 +39,9 @@ func colorize(contours []*Contour) {
 			next := edges[nextIdx]
 
 			if (this.Kind == "Q" || this.Kind == "C") && next.Kind != "L" {
-				next.Color = WHITE
+				next.Color = current
+			} else {
+				current = bank[(si+1)%3]
 			}
 
 		}

@@ -17,7 +17,7 @@ type Msdf struct {
 type Config struct {
 	height, width int
 	Scale         float64
-	Debug         bool
+	Debug         string
 }
 
 func New(addr string, cfg *Config) (*Msdf, error) {
@@ -70,12 +70,12 @@ func (m *Msdf) Get(r rune) *Glyph {
 
 	}
 
-	if m.cfg.Debug {
+	if m.cfg.Debug != "" {
 		dbg := NewGlyph(512, 512)
 		for _, con := range contours {
 			con.Debug(dbg, metrics)
 		}
-		dbg.Save(fmt.Sprintf("assets/%c_debug.png", r))
+		dbg.Save(fmt.Sprintf("%s/%c_debug.png", m.cfg.Debug, r))
 
 	}
 	return tex
