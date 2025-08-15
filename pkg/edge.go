@@ -86,6 +86,9 @@ func (m *Msdf) getVector(r rune) (sfnt.Segments, fixed.Rectangle26_6, error) {
 	return segments, bounds, nil
 
 }
+func (e *Edge) ID() string {
+	return fmt.Sprintf("%s%d", e.Kind, e.id)
+}
 
 func (e *Edge) String() string {
 	return fmt.Sprintf("%s%02d[%s] ", e.Kind, e.id, e.Color)

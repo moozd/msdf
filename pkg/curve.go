@@ -77,21 +77,18 @@ func (c1 *baseCurve) IsCorner(c2 Curve, winding ClockDirection, threshold float6
 	v1 := c1.GetDirectionVector().Normalize()
 	v2 := c2.GetDirectionVector().Normalize()
 
-	dp := v1.Dot(v2) / (v1.Distance() * v2.Distance())
-	angle := math.Acos(dp)
+	// Signed angle in radians
+	cross := v1.Cross(v2)
+	dot := v1.Dot(v2)
+	angle := math.Atan2(cross, dot) // signed turn from v1 to v2
 
-	cs := v1.Cross(v2)
-	isInterior := (winding == CCW && cs > 0) || (winding == CW && cs < 0)
-	if !isInterior {
-		angle = 2*math.Pi - angle
-	}
-
-	if winding == CCW {
-		angle = angle - math.Pi
+	// Adjust based on winding
+	if winding == CW {
+		angle = -angle
 	}
 
 	deg := angle * 180 / math.Pi
-	return deg < threshold, deg
+	return math.Abs(deg) < threshold, deg
 
 }
 

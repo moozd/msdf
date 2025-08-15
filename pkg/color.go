@@ -1,6 +1,7 @@
 package msdf
 
 import (
+	"fmt"
 	"image/color"
 	"strings"
 )
@@ -17,32 +18,29 @@ const (
 
 func colorize(contours []*Contour) {
 
-	si := 0
-	bank := []EdgeColor{RED | GREEN, GREEN | BLUE, BLUE | RED}
-	current := bank[0]
-
-	for _, contour := range contours {
-		// fmt.Println()
-		// fmt.Printf("Contour: %d\n", k+1)
+	for k, contour := range contours {
+		fmt.Println()
+		fmt.Printf("Contour: %d\n", k+1)
 		edges := contour.edges
-		n := len(edges)
 
 		for i, edge := range edges {
 			edge.Color = []EdgeColor{RED | GREEN, GREEN | BLUE, BLUE | RED}[i%3]
 		}
+
+		n := len(edges)
 		for i := range n {
 			nextIdx := (i + 1) % n
-			// isSharp, deg := edges[i].Curve.IsCorner(edges[nextIdx].Curve, contour.winding, 136)
-			// fmt.Printf("%v->%v: isSharp: %-8t angle: %-8.2f winding: %-8v \n", edges[i], edges[nextIdx], isSharp, deg, contour.winding)
+			isSharp, deg := edges[i].Curve.IsCorner(edges[nextIdx].Curve, contour.winding, 135)
+			fmt.Printf("%v->%v: isSharp: %-8t angle: %-8.2f winding: %-8v \n", edges[i], edges[nextIdx], isSharp, deg, contour.winding)
 
-			this := edges[i]
-			next := edges[nextIdx]
-
-			if (this.Kind == "Q" || this.Kind == "C") && next.Kind != "L" {
-				next.Color = current
-			} else {
-				current = bank[(si+1)%3]
-			}
+			// this := edges[i]
+			// next := edges[nextIdx]
+			//
+			// if (this.Kind == "Q" || this.Kind == "C") && next.Kind != "L" {
+			// 	next.Color = current
+			// } else {
+			// 	current = bank[(si+1)%3]
+			// }
 
 		}
 
