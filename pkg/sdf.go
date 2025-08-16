@@ -82,6 +82,66 @@ func (m *Msdf) Get(r rune) *Glyph {
 	return tex
 }
 
+func getDistance(c Curve, Q Point) (float64, float64) {
+
+	candidates := [][]float64{
+		{0, vec().fromAB(Q, c.PointAt(0)).Distance()},
+		{1, vec().fromAB(Q, c.PointAt(1)).Distance()},
+	}
+	tStarts := []float64{0.1, 0.3, 0.5, 0.9}
+
+	for _, ts := range tStarts {
+		t := solveNewtonRaphson(c, Q, ts)
+		if 0 <= t && t <= 1 {
+			d := vec().fromAB(Q, c.PointAt(t)).Distance()
+			candidates = append(candidates, []float64{t, d})
+		} else {
+
+			for _, s := range []float64{t - 0.1, t, t + 0.1} {
+				if 0 <= s && s <= 1 {
+					d := vec().fromAB(Q, c.PointAt(s)).Distance()
+					candidates = append(candidates, []float64{s, d})
+				}
+			}
+		}
+	}
+
+	m := math.MaxFloat32
+	res := []float64{0, 0}
+	for _, c := range candidates {
+		if c[1] < m {
+			m = c[1]
+			res = c
+		}
+	}
+	return res[0], res[1]
+
+}
+
+func solveNewtonRaphson(c Curve, q Point, ts float64) float64 {
+
+	t := ts
+	for _ = range 10 {
+
+		Q := vec().fromP(q)
+		BT := vec().fromP(c.PointAt(t))
+		BPT := vec().fromP(c.TangentAt(t))
+		BPPT := vec().fromP(c.CurvatureAt(t))
+
+		ft := BT.Sub(Q).Dot(BPT)
+		fpt := math.Pow(BPT.Distance(), 2) + BT.Sub(Q).Dot(BPPT)
+
+		t0 := t
+		t = t - ft/fpt
+
+		if math.Abs(t-t0) < 1e-8 {
+			break
+		}
+	}
+
+	return t //vec().fromAB(q, c.PointAt(t)).Distance()
+}
+
 func getChannel(cfg *Config, contours []*Contour, c EdgeColor, x, y float64) uint8 {
 
 	var A *Vector
@@ -98,7 +158,7 @@ func getChannel(cfg *Config, contours []*Contour, c EdgeColor, x, y float64) uin
 			for t := 0.0; t <= 1; t += 0.01 {
 
 				p := curve.PointAt(t)
-				a := vec(p.X, p.Y, x, y)
+				a := vec().fromXY(p.X, p.Y, x, y)
 
 				if a.Distance() < minDist {
 					found = true
@@ -106,9 +166,18 @@ func getChannel(cfg *Config, contours []*Contour, c EdgeColor, x, y float64) uin
 
 					A = a
 					s := curve.TangentAt(t)
-					B = vec(0, 0, s.X, s.Y)
+					B = vec().fromXY(0, 0, s.X, s.Y)
 				}
 			}
+
+			// d, t := getDistance(curve, Point{X: x, Y: y})
+			// if d < minDist {
+			// 	found = true
+			// 	minDist = d
+			// 	p := curve.PointAt(t)
+			// 	A = vec().fromXY(p.X, p.Y, x, y)
+			// 	B = vec().fromP(curve.TangentAt(t))
+			// }
 
 		}
 	}

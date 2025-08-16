@@ -11,21 +11,43 @@ type Vector struct {
 	X, Y float64
 }
 
-func vec(x0, y0, x1, y1 float64) *Vector {
-	return &Vector{
-		X: x1 - x0,
-		Y: y1 - y0,
-	}
+func vec() *Vector {
+	return &Vector{}
 }
 
-func vec_p26_6(a, b fixed.Point26_6) *Vector {
+func (v *Vector) fromXY(x0, y0, x1, y1 float64) *Vector {
+	v.X = x1 - x0
+	v.Y = y1 - y0
+
+	return v
+}
+
+func (v *Vector) fromAB(a, b Point) *Vector {
+	v.fromXY(a.X, a.Y, b.X, b.Y)
+	return v
+}
+
+func (v *Vector) fromP(b Point) *Vector {
+	v.fromXY(0, 0, b.X, b.Y)
+	return v
+}
+
+func (v *Vector) fromP26_6(a, b fixed.Point26_6) *Vector {
 	xa, ya := unpack_p26_6(a)
 	xb, yb := unpack_p26_6(b)
-	return vec(xa, ya, xb, yb)
+	v.fromXY(xa, ya, xb, yb)
+	return v
 }
 
 func (v *Vector) Dot(b *Vector) float64 {
 	return v.X*b.X + v.Y*b.Y
+}
+
+func (v *Vector) Sub(b *Vector) *Vector {
+	return &Vector{
+		X: v.X - b.X,
+		Y: v.Y - b.Y,
+	}
 }
 
 func (v *Vector) Cross(b *Vector) float64 {
