@@ -18,9 +18,9 @@ MSDF encodes vector fonts as textures using RGB channels to preserve sharp corne
 
 | Character | MSDF Texture                        | Rendered Output                            |
 | --------- | ----------------------------------- | ------------------------------------------ |
-| **@**     | <img src="assets/@.png" width="64"> | <img src="assets/@_render.png" width="64"> |
-| **A**     | <img src="assets/A.png" width="64"> | <img src="assets/A_render.png" width="64"> |
-| **U**     | <img src="assets/U.png" width="64"> | <img src="assets/U_render.png" width="64"> |
+| **@**     | <img src="assets/@.png" width="32"> | <img src="assets/@_render.png" width="32"> |
+| **A**     | <img src="assets/A.png" width="32"> | <img src="assets/A_render.png" width="32"> |
+| **U**     | <img src="assets/U.png" width="32"> | <img src="assets/U_render.png" width="32"> |
 
 ### Debug Visualizations
 
