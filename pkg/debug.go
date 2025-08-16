@@ -12,7 +12,7 @@ import (
 
 func (c *Contour) Debug(g *Glyph, m *Metrics) {
 	count := 0
-	for _, edge := range c.edges {
+	for _, edge := range c.Edges {
 
 		points := edge.Curve.GetLowResPoints()
 		c := edge.Color.RGB()

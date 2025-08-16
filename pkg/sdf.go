@@ -88,7 +88,7 @@ func getChannel(cfg *Config, contours []*Contour, c EdgeColor, x, y float64) uin
 	found := false
 	minDist := math.MaxFloat32
 	for _, con := range contours {
-		for _, edge := range con.edges {
+		for _, edge := range con.Edges {
 			curve := edge.Curve
 			if !edge.Color.Has(c) {
 				continue

@@ -12,8 +12,8 @@ const (
 )
 
 type Contour struct {
-	winding ClockDirection
-	edges   []*Edge
+	Winding ClockDirection
+	Edges   []*Edge
 }
 
 func (m *Msdf) getContours(r rune) ([]*Contour, error) {
@@ -67,13 +67,13 @@ func newContour(edges []*Edge) *Contour {
 	}
 
 	return &Contour{
-		edges:   edges,
-		winding: w,
+		Edges:   edges,
+		Winding: w,
 	}
 }
 
 func (c Contour) String() string {
-	return fmt.Sprintf("D: %d , E: %v", c.winding, c.edges)
+	return fmt.Sprintf("D: %d , E: %v", c.Winding, c.Edges)
 }
 
 func (c ClockDirection) String() string {

@@ -13,7 +13,7 @@ type CurveSampler interface {
 
 type Curve interface {
 	CurveSampler
-	IsCorner(c2 Curve, winding ClockDirection, threshold float64) (bool, float64)
+	IsCorner(c2 Curve, threshold float64) bool
 	IsConnected(c Curve) bool
 	GetSignedArea() float64
 	GetLowResPoints() []fixed.Point26_6
@@ -73,22 +73,16 @@ func (c baseCurve) GetDirectionVector() *Vector {
 	return c.directionVec
 }
 
-func (c1 *baseCurve) IsCorner(c2 Curve, winding ClockDirection, threshold float64) (bool, float64) {
+func (c1 *baseCurve) IsCorner(c2 Curve, threshold float64) bool {
 	v1 := c1.GetDirectionVector().Normalize()
 	v2 := c2.GetDirectionVector().Normalize()
 
-	// Signed angle in radians
 	cross := v1.Cross(v2)
 	dot := v1.Dot(v2)
 	angle := math.Atan2(cross, dot) // signed turn from v1 to v2
 
-	// Adjust based on winding
-	if winding == CW {
-		angle = -angle
-	}
-
 	deg := angle * 180 / math.Pi
-	return math.Abs(deg) < threshold, deg
+	return math.Abs(deg) < threshold
 
 }
 
