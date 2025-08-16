@@ -160,16 +160,17 @@ func getChannel(cfg *Config, contours []*Contour, c EdgeColor, x, y float64) uin
 				p := curve.PointAt(t)
 				a := vec().fromXY(p.X, p.Y, x, y)
 
-				if a.Distance() < minDist {
-					found = true
-					minDist = a.Distance()
+				d := A.Distance()
 
+				if d < minDist {
+					found = true
+					minDist = d
 					A = a
-					s := curve.TangentAt(t)
-					B = vec().fromXY(0, 0, s.X, s.Y)
+					B = vec().fromP(curve.TangentAt(t))
 				}
 			}
 
+			// FIXME: fix  Newton Raphson
 			// d, t := getDistance(curve, Point{X: x, Y: y})
 			// if d < minDist {
 			// 	found = true
