@@ -15,6 +15,7 @@ type Msdf struct {
 }
 
 type Config struct {
+	Seed          uint
 	height, width int
 	Scale         float64
 	Debug         string
@@ -119,7 +120,7 @@ func getChannel(cfg *Config, contours []*Contour, c EdgeColor, x, y float64) uin
 	distance := sign(B.Cross(A)) * (minDist)
 
 	pixelSize := math.Min(float64(cfg.width), float64(cfg.height))
-	distanceRange := (2.0 / pixelSize) * 30
+	distanceRange := (2.0 / pixelSize) * 50
 
 	normalized := (distance / distanceRange) + 0.5
 	clamped := clamp(normalized, 0, 1)

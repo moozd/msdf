@@ -49,7 +49,7 @@ func (m *Msdf) getContours(r rune) ([]*Contour, error) {
 
 	}
 
-	colorize(cons)
+	colorize(cons, m.cfg.Seed)
 
 	return cons, nil
 }

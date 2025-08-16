@@ -1,51 +1,107 @@
 package msdf
 
 import (
-	"fmt"
 	"image/color"
+	"math"
 	"strings"
 )
 
 type EdgeColor byte
 
 const (
-	RED   EdgeColor = 1 << 0 // = 1 (bit 0)
-	GREEN           = 1 << 1 // = 2 (bit 1)
-	BLUE            = 1 << 2 // = 4 (bit 2)
-	WHITE           = RED | GREEN | BLUE
-	CLEAR           = 0x00
+	RED     EdgeColor = 1 << 0 // = 1 (bit 0)
+	GREEN             = 1 << 1 // = 2 (bit 1)
+	BLUE              = 1 << 2 // = 4 (bit 2)
+	WHITE             = RED | GREEN | BLUE
+	CYAN              = GREEN | BLUE
+	MAGENTA           = RED | BLUE
+	YELLOW            = RED | GREEN
+	CLEAR             = 0x00
 )
 
-func colorize(contours []*Contour) {
+var pallete = []EdgeColor{CYAN, MAGENTA, YELLOW}
 
-	for k, contour := range contours {
-		fmt.Println()
-		fmt.Printf("Contour: %d\n", k+1)
+func colorize(contours []*Contour, seed uint) {
+	thershold := math.Sin(3)
+	var corners []int
+	color := initColor(&seed)
+
+	for _, contour := range contours {
 		edges := contour.Edges
 
+		corners = []int{}
+		prevEdge := edges[0]
 		for i, edge := range edges {
-			edge.Color = []EdgeColor{RED | GREEN, GREEN | BLUE, BLUE | RED}[i%3]
+			isCorner := prevEdge.Curve.IsCorner(edge.Curve, thershold)
+			if isCorner {
+				corners = append(corners, i)
+			}
+
+			prevEdge = edge
 		}
 
-		n := len(edges)
-		for i := range n {
-			nextIdx := (i + 1) % n
-			isSharp := edges[i].Curve.IsCorner(edges[nextIdx].Curve, 135)
-			fmt.Printf("%v->%v: isSharp: %-8t winding: %-8v \n", edges[i], edges[nextIdx], isSharp, contour.Winding)
+		// smooth edge
+		if len(corners) == 0 {
+			// TODO: smooth edge case
 
-			// this := edges[i]
-			// next := edges[nextIdx]
-			//
-			// if (this.Kind == "Q" || this.Kind == "C") && next.Kind != "L" {
-			// 	next.Color = current
-			// } else {
-			// 	current = bank[(si+1)%3]
-			// }
+			// teardrop case
+		} else if len(corners) == 1 {
+			// TODO: add teardrp case
 
+			// multiple corners
+		} else {
+			cornerCount := len(contours)
+			spline := 0
+			start := corners[0]
+			m := len(contour.Edges)
+			switchColor(&color, &seed)
+			initialColor := color
+			for i := range m {
+				index := (start + i) % m
+				if spline+1 < cornerCount && corners[spline+1] == index {
+					spline += 1
+					banned := EdgeColor(0)
+					if spline == cornerCount-1 {
+						banned = initialColor
+					}
+					switchColorEx(&color, &seed, EdgeColor(banned))
+				}
+				contour.Edges[index].Color = color
+			}
 		}
 
 	}
 
+}
+
+func seedExtract2(seed *uint) int {
+	v := int(*seed) & 1
+	*seed = *seed >> 1
+	return v
+}
+
+func seedExtract3(seed *uint) int {
+	v := int(*seed % 3)
+	*seed /= 3
+	return v
+}
+
+func initColor(seed *uint) EdgeColor {
+	return pallete[seedExtract3(seed)]
+}
+
+func switchColor(color *EdgeColor, seed *uint) {
+	shifted := *color << (1 + seedExtract2(seed))
+	*color = EdgeColor((shifted | shifted>>3) & WHITE)
+}
+
+func switchColorEx(color *EdgeColor, seed *uint, banned EdgeColor) {
+	combined := EdgeColor(*color & banned)
+	if combined == RED || combined == GREEN || combined == BLUE {
+		*color = EdgeColor(combined ^ WHITE)
+	} else {
+		switchColor(color, seed)
+	}
 }
 
 func (e EdgeColor) RGB() color.RGBA {

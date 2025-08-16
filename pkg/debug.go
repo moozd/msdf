@@ -57,7 +57,7 @@ func (c *Contour) Debug(g *Glyph, m *Metrics) {
 	}
 }
 
-func (m *Msdf) Debug(path string, tex *Glyph) {
+func (m *Msdf) Debug(r rune, tex *Glyph) {
 	out := NewGlyph(512, 512)
 
 	texBounds := tex.Image().Bounds()
@@ -87,6 +87,6 @@ func (m *Msdf) Debug(path string, tex *Glyph) {
 		}
 	}
 
-	out.Save(path)
+	out.Save(fmt.Sprintf("%s/%c_render.png", m.cfg.Debug, r))
 
 }

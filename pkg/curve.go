@@ -79,10 +79,8 @@ func (c1 *baseCurve) IsCorner(c2 Curve, threshold float64) bool {
 
 	cross := v1.Cross(v2)
 	dot := v1.Dot(v2)
-	angle := math.Atan2(cross, dot) // signed turn from v1 to v2
 
-	deg := angle * 180 / math.Pi
-	return math.Abs(deg) < threshold
+	return dot <= 0 || math.Abs(cross) > threshold
 
 }
 

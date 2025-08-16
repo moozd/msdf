@@ -43,6 +43,18 @@ func init() {
 				os.Exit(1)
 			}
 
+			seed, err := cmd.Flags().GetUint("seed")
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			scale, err := cmd.Flags().GetFloat64("scale")
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
 			debug, err := cmd.Flags().GetBool("debug")
 			if err != nil {
 				fmt.Println(err)
@@ -66,19 +78,26 @@ func init() {
 				debugPath = outDir
 			}
 			cfg := &msdf.Config{
+				Seed:  seed,
+				Scale: scale,
 				Debug: debugPath,
 			}
 			msdfgen, _ := msdf.New(fontFile, cfg)
 			s := msdfgen.Get(char)
 
 			s.Save(filepath.Join(outDir, fmt.Sprintf("%c.png", char)))
+			if debug {
+				msdfgen.Debug(char, s)
+			}
 
 		},
 	}
+	glyphCmd.Flags().BoolP("debug", "d", false, "Generate Debug output to see the edge coloring")
 	glyphCmd.Flags().StringP("font", "f", "", "Font path.")
 	glyphCmd.Flags().StringP("char", "c", "", "Character.")
 	glyphCmd.Flags().StringP("out", "o", ".", "Output dir path.")
-	glyphCmd.Flags().BoolP("debug", "d", false, "Generate Debug output to see the edge coloring")
+	glyphCmd.Flags().Uint("seed", 0, "coloring seed")
+	glyphCmd.Flags().Float64("scale", 1.0, "texture scale")
 
 	rootCmd.AddCommand(glyphCmd)
 }
