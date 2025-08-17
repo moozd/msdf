@@ -11,6 +11,18 @@ type Vector struct {
 	X, Y float64
 }
 
+type Point struct {
+	X, Y float64
+}
+
+func (p Point) asVector() *Vector {
+	return vec().fromP(p)
+}
+
+func (p Point) asFixed() fixed.Point26_6 {
+	return pack_p26_6(p.X, p.Y)
+}
+
 func vec() *Vector {
 	return &Vector{}
 }

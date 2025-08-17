@@ -4,10 +4,6 @@ import (
 	"golang.org/x/image/math/fixed"
 )
 
-type Point struct {
-	X, Y float64
-}
-
 func sign(s float64) float64 {
 	if s > 0 {
 		return +1
@@ -16,10 +12,6 @@ func sign(s float64) float64 {
 		return -1
 	}
 	return 0
-}
-
-func (p Point) fixed() fixed.Point26_6 {
-	return pack_p26_6(p.X, p.Y)
 }
 
 func clamp(value, min, max float64) float64 {

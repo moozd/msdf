@@ -40,7 +40,7 @@ func (c *baseCurve) doLowResSampling(sampler CurveSampler) {
 	for i := range 65 {
 		t := float64(i) / 64.0
 		p := sampler.PointAt(t)
-		c.points = append(c.points, p.fixed())
+		c.points = append(c.points, p.asFixed())
 	}
 
 	x0, y0 := unpack_p26_6(c.points[0])
