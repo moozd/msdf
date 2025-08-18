@@ -78,9 +78,10 @@ func init() {
 				debugPath = outDir
 			}
 			cfg := &msdf.Config{
-				Seed:  seed,
-				Scale: scale,
-				Debug: debugPath,
+				Seed:           seed,
+				Scale:          scale,
+				Debug:          debugPath,
+				DistanceFinder: &msdf.BruteForceMinDistanceFinder{},
 			}
 			msdfgen, _ := msdf.New(fontFile, cfg)
 			s := msdfgen.Get(char)

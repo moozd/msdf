@@ -16,11 +16,15 @@ type Point struct {
 }
 
 func (p Point) asVector() *Vector {
-	return vec().fromP(p)
+	return vec().fromAB(Point{}, p)
 }
 
 func (p Point) asFixed() fixed.Point26_6 {
 	return pack_p26_6(p.X, p.Y)
+}
+
+func (p Point) Sub(b Point) *Vector {
+	return vec().fromAB(p, b)
 }
 
 func vec() *Vector {
@@ -39,11 +43,6 @@ func (v *Vector) fromAB(a, b Point) *Vector {
 	return v
 }
 
-func (v *Vector) fromP(b Point) *Vector {
-	v.fromXY(0, 0, b.X, b.Y)
-	return v
-}
-
 func (v *Vector) fromP26_6(a, b fixed.Point26_6) *Vector {
 	xa, ya := unpack_p26_6(a)
 	xb, yb := unpack_p26_6(b)
@@ -53,13 +52,6 @@ func (v *Vector) fromP26_6(a, b fixed.Point26_6) *Vector {
 
 func (v *Vector) Dot(b *Vector) float64 {
 	return v.X*b.X + v.Y*b.Y
-}
-
-func (v *Vector) Sub(b *Vector) *Vector {
-	return &Vector{
-		X: v.X - b.X,
-		Y: v.Y - b.Y,
-	}
 }
 
 func (v *Vector) Cross(b *Vector) float64 {

@@ -15,10 +15,11 @@ type Msdf struct {
 }
 
 type Config struct {
-	Seed          uint
-	height, width int
-	Scale         float64
-	Debug         string
+	Seed           uint
+	height, width  int
+	Scale          float64
+	Debug          string
+	DistanceFinder MinDistanceFinder
 }
 
 func New(addr string, cfg *Config) (*Msdf, error) {
@@ -61,9 +62,9 @@ func (m *Msdf) Get(r rune) *Glyph {
 			xi, yi := metrics.ToFloat(x, y)
 			flippedY := m.cfg.height - 1 - y
 
-			r := getChannel(m.cfg, contours, RED, xi, yi)
-			g := getChannel(m.cfg, contours, GREEN, xi, yi)
-			b := getChannel(m.cfg, contours, BLUE, xi, yi)
+			r := m.getChannel(contours, RED, xi, yi)
+			g := m.getChannel(contours, GREEN, xi, yi)
+			b := m.getChannel(contours, BLUE, xi, yi)
 
 			tex.Image().Set(x, flippedY, color.RGBA{r, g, b, 255})
 
@@ -82,85 +83,45 @@ func (m *Msdf) Get(r rune) *Glyph {
 	return tex
 }
 
-func getDistance(c Curve, Q Point) (float64, float64) {
-
-	queue := []float64{0.0, 0.1}
-
-	for len(queue) > 2 {
-		ts := queue[0:1][0]
-		te := queue[1:2][0]
-		queue = queue[2:]
-		cs := c.CurvatureAt(ts).asVector().Distance()
-		ce := c.CurvatureAt(te).asVector().Distance()
-
-		if math.Abs(ce-cs) < 1e-8 {
-			break
-		}
-		queue = append(queue, ts, te/2.0, te/2.0, te)
-
-	}
-
-	return 0.0, 0.0
-}
-
-func getChannel(cfg *Config, contours []*Contour, c EdgeColor, x, y float64) uint8 {
+func (m *Msdf) getChannel(contours []*Contour, c EdgeColor, x, y float64) uint8 {
 
 	var A *Vector
 	var B *Vector
 	found := false
-	newtonRaphsonT := 0.0
-	newtonRaphsonMinDistance := math.MaxFloat32
-	broutforceT := 0.0
-	brouteForceMinDistance := math.MaxFloat32
-	for _, con := range contours {
-		for _, edge := range con.Edges {
+	minDistance := math.MaxFloat32
+
+	for _, contour := range contours {
+		for _, edge := range contour.Edges {
+
 			curve := edge.Curve
-			if !edge.Color.Has(c) {
+			color := edge.Color
+
+			if !color.Has(c) {
 				continue
 			}
 
-			for t := 0.0; t <= 1; t += 0.1 {
+			Q := Point{X: x, Y: y}
+			t, d := m.cfg.DistanceFinder.Find(curve, Q)
 
-				p := curve.PointAt(t)
-				a := vec().fromXY(p.X, p.Y, x, y)
-
-				d := a.Distance()
-
-				if d < brouteForceMinDistance {
-					brouteForceMinDistance = d
-					broutforceT = t
-				}
-			}
-
-			// FIXME: fix  Newton Raphson
-			d, t := getDistance(curve, Point{X: x, Y: y})
-			if d < newtonRaphsonMinDistance {
+			if d < minDistance {
 				found = true
-				newtonRaphsonT = t
-				newtonRaphsonMinDistance = d
-				p := curve.PointAt(t)
-				A = vec().fromXY(p.X, p.Y, x, y)
-				B = vec().fromP(curve.TangentAt(t))
-			}
-		}
-	}
+				minDistance = d
+				P := curve.PointAt(t)
 
-	// Debug: always print comparison for first few points to verify fix
-	if x < 2.4 && y > -0.5 {
-		fmt.Printf("X: %f Y: %f\n", x, y)
-		fmt.Printf("BF: T=%f D=%f\n", broutforceT, brouteForceMinDistance)
-		fmt.Printf("NR: T=%f D=%f\n", newtonRaphsonT, newtonRaphsonMinDistance)
-		fmt.Printf("NR T in range [0,1]: %t\n", 0 <= newtonRaphsonT && newtonRaphsonT <= 1)
-		fmt.Println()
+				A = P.Sub(Q)
+				B = curve.TangentAt(t).asVector()
+			}
+
+		}
 	}
 
 	if !found {
 		return 127
 	}
 
-	distance := sign(B.Cross(A)) * (newtonRaphsonMinDistance)
+	distance := sign(B.Cross(A)) * (minDistance)
 
-	pixelSize := math.Min(float64(cfg.width), float64(cfg.height))
+	pixelSize := math.Min(float64(m.cfg.width), float64(m.cfg.height))
 	distanceRange := (2.0 / pixelSize) * 50
 
 	normalized := (distance / distanceRange) + 0.5

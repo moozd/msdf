@@ -1,20 +1,25 @@
 package msdf
 
 import (
-	"fmt"
 	"math"
 )
 
 type MinDistanceFinder interface {
-	GetDistance(c Curve, Q Point) (float64, float64)
+	Find(c Curve, Q Point) (float64, float64)
 }
 
-type BruteForceMinDistanceFinder struct{}
+type BruteForceMinDistanceFinder struct {
+	Step float64
+}
 
-func (s *BruteForceMinDistanceFinder) GetDistance(c Curve, Q Point) (float64, float64) {
+func (s *BruteForceMinDistanceFinder) Find(c Curve, Q Point) (float64, float64) {
 	T := 0.0
 	D := math.MaxFloat32
-	for t := 0.0; t <= 1.0; t += 0.01 {
+	step := s.Step
+	if step == 0 {
+		step = 0.01
+	}
+	for t := 0.0; t <= 1.0; t += step {
 		p := c.PointAt(t)
 		d := vec().fromAB(p, Q).Distance()
 
@@ -27,32 +32,56 @@ func (s *BruteForceMinDistanceFinder) GetDistance(c Curve, Q Point) (float64, fl
 }
 
 type SubvisionMinDistanceFinder struct {
-	threshold float64
+	MaxSubdivisions   int
+	MinSegmentLength  float64
+	FlatnessThreshold float64
+	ScaleFactor       int
 }
 
-func (s *SubvisionMinDistanceFinder) GetDistance(c Curve, Q Point) (float64, float64) {
+func (s *SubvisionMinDistanceFinder) Find(c Curve, Q Point) (float64, float64) {
 
-	queue := []float64{0.0, 0.1}
-	candidates := []float64{}
+	queue := []float64{0.0, 1}
+	T := 0.0
+	D := math.MaxFloat64
 
-	for len(queue) >= 2 {
-		ts := queue[0:1][0]
-		te := queue[1:2][0]
+	for i := 1; len(queue) >= 2 && i < s.MaxSubdivisions; i += 1 {
+
+		ts := queue[0]
+		te := queue[1]
 		queue = queue[2:]
 
-		cs := c.CurvatureAt(ts).asVector().Distance()
-		ce := c.CurvatureAt(te).asVector().Distance()
+		distance := c.PointAt(te).Sub(c.PointAt(ts)).Distance()
+		flatness := c.CurvatureAt(te).Sub(c.CurvatureAt(ts)).Distance()
 
-		fmt.Printf("%f\n", math.Abs(ce-cs))
+		if flatness < s.FlatnessThreshold || distance < s.MinSegmentLength {
 
-		if math.Abs(ce-cs) < 1e-8 {
-			candidates = append(candidates, cs, ce)
+			start := c.PointAt(ts)
+			end := c.PointAt(te)
+			aq := Q.Sub(start)
+			ae := end.Sub(start)
+
+			if aq.Distance() == 0 {
+				continue
+			}
+
+			d := math.Abs(ae.Cross(aq)) / ae.Distance()
+
+			if d < D {
+				D = d
+				projection := aq.Dot(ae) / ae.Dot(ae)
+				T = clamp(ts+projection*(te-ts), ts, te)
+			}
+			continue
 		}
-		queue = append(queue, ts, te/2.0, te/2.0, te)
+
+		step := (te - ts) / float64(s.ScaleFactor)
+		for j := 0; j < s.ScaleFactor; j++ {
+			t_start := ts + float64(j)*step
+			t_end := ts + float64(j+1)*step
+			queue = append(queue, t_start, t_end)
+		}
 
 	}
 
-	fmt.Println(candidates)
-
-	return 0.0, 0.0
+	return T, D
 }
