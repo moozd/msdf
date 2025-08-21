@@ -23,7 +23,7 @@ func (g *Glyph) setUV(uv Coords) {
 }
 
 type Metadata struct {
-	Altas   MetadataAtlas   `json:"atlas"`
+	Atlas   MetadataAtlas   `json:"atlas"`
 	Metrics MetadataMetrics `json:"metrics"`
 	Glyphs  []GlyphOptions  `json:"glyphs"`
 }

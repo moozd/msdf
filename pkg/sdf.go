@@ -54,11 +54,11 @@ func New(addr string, cfg *Config) (*Msdf, error) {
 
 func (m *Msdf) CreateAtlas(size int) (*Canvas, Metadata) {
 	atlas := newCanvas(size, size, color.RGBA{0, 0, 0, 255})
-	m.metadata.Altas.Type = "msdf"
-	m.metadata.Altas.YOrigin = "bottom"
-	m.metadata.Altas.Size = m.cfg.Size
-	m.metadata.Altas.Width = size
-	m.metadata.Altas.Height = size
+	m.metadata.Atlas.Type = "msdf"
+	m.metadata.Atlas.YOrigin = "bottom"
+	m.metadata.Atlas.Size = m.cfg.Size
+	m.metadata.Atlas.Width = size
+	m.metadata.Atlas.Height = size
 	m.metadata.Glyphs = []GlyphOptions{}
 
 	x := 0
