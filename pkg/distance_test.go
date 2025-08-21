@@ -36,6 +36,7 @@ func TestMSDF(t *testing.T) {
 		Size:           96,
 		DistanceField:  4.0,
 		DistanceFinder: bruteforce,
+		Colorizer:      &SimpleColorizer{},
 	}
 	generator, _ := New("/home/mo/.local/share/fonts/FiraCode/FiraCodeNerdFont-Regular.ttf", cfg)
 

@@ -81,6 +81,7 @@ func init() {
 				Seed:           seed,
 				Scale:          scale,
 				Debug:          debugPath,
+				Colorizer:      &msdf.SimpleColorizer{},
 				DistanceFinder: &msdf.BruteForceMinDistanceFinder{},
 			}
 			msdfgen, _ := msdf.New(fontFile, cfg)
