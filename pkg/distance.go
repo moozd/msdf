@@ -15,13 +15,14 @@ type BruteForceMinDistanceFinder struct {
 func (s *BruteForceMinDistanceFinder) Find(c Curve, Q Point) (float64, float64) {
 	T := 0.0
 	D := math.MaxFloat32
+	var V Vector
 	step := s.Step
 	if step == 0 {
 		step = 0.01
 	}
 	for t := 0.0; t <= 1.0; t += step {
 		p := c.PointAt(t)
-		d := vec().fromAB(p, Q).Distance()
+		d := V.fromAB(p, Q).Distance()
 
 		if d < D {
 			D = d
