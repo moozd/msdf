@@ -14,7 +14,7 @@ type Msdf struct {
 	font     *sfnt.Font
 	cfg      *Config
 	metadata *Metadata
-	palette  *ColorPalette
+	palette  *EdgeColorPalette
 }
 
 type Config struct {
@@ -24,7 +24,7 @@ type Config struct {
 	Scale          float64
 	Debug          string
 	DistanceFinder MinDistanceFinder
-	Colorizer      Colorizer
+	EdgeColorizer      EdgeColorizer
 	height, width  int
 }
 
@@ -46,7 +46,7 @@ func New(addr string, cfg *Config) (*Msdf, error) {
 		cfg:      cfg,
 		font:     fnt,
 		metadata: &Metadata{},
-		palette:  newColorPalette(&cfg.Seed),
+		palette:  newEdgeColorPalette(&cfg.Seed),
 	}
 
 	return msdf, nil

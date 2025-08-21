@@ -6,26 +6,13 @@ import (
 	"strings"
 )
 
-type EdgeColor byte
-
-const (
-	RED     EdgeColor = 1 << 0 // = 1 (bit 0)
-	GREEN             = 1 << 1 // = 2 (bit 1)
-	BLUE              = 1 << 2 // = 4 (bit 2)
-	WHITE             = RED | GREEN | BLUE
-	CYAN              = GREEN | BLUE
-	MAGENTA           = RED | BLUE
-	YELLOW            = RED | GREEN
-	CLEAR             = 0x00
-)
-
-type Colorizer interface {
-	Colorize(contours []*Contour, palette *ColorPalette)
+type EdgeColorizer interface {
+	Colorize(contours []*Contour, palette *EdgeColorPalette)
 }
 
-type SimpleColorizer struct{}
+type SimpleEdgeColorizer struct{}
 
-func (sc SimpleColorizer) Colorize(contours []*Contour, palette *ColorPalette) {
+func (sc SimpleEdgeColorizer) Colorize(contours []*Contour, palette *EdgeColorPalette) {
 
 	thershold := math.Sin(3)
 	var corners []int
@@ -69,7 +56,7 @@ func (sc SimpleColorizer) Colorize(contours []*Contour, palette *ColorPalette) {
 					if spline == cornerCount-1 {
 						banned = initialColor
 					}
-					palette.SuffleEx(&color, EdgeColor(banned))
+					palette.ShuffleEx(&color, EdgeColor(banned))
 				}
 				contour.Edges[index].Color = color
 			}
@@ -78,41 +65,54 @@ func (sc SimpleColorizer) Colorize(contours []*Contour, palette *ColorPalette) {
 	}
 }
 
-type ColorPalette struct {
+type EdgeColor byte
+
+const (
+	RED     EdgeColor = 1 << 0 // = 1 (bit 0)
+	GREEN             = 1 << 1 // = 2 (bit 1)
+	BLUE              = 1 << 2 // = 4 (bit 2)
+	WHITE             = RED | GREEN | BLUE
+	CYAN              = GREEN | BLUE
+	MAGENTA           = RED | BLUE
+	YELLOW            = RED | GREEN
+	CLEAR             = 0x00
+)
+
+type EdgeColorPalette struct {
 	seed   *uint
 	colors []EdgeColor
 }
 
-func newColorPalette(seed *uint) *ColorPalette {
-	return &ColorPalette{
+func newEdgeColorPalette(seed *uint) *EdgeColorPalette {
+	return &EdgeColorPalette{
 		seed:   seed,
 		colors: []EdgeColor{CYAN, MAGENTA, YELLOW},
 	}
 }
 
-func (cp *ColorPalette) seedExtract2() int {
+func (cp *EdgeColorPalette) seedExtract2() int {
 
 	v := int(*cp.seed) & 1
 	*cp.seed = *cp.seed >> 1
 	return v
 }
 
-func (cp *ColorPalette) seedExtract3() int {
+func (cp *EdgeColorPalette) seedExtract3() int {
 	v := int(*cp.seed % 3)
 	*cp.seed /= 3
 	return v
 }
 
-func (cp *ColorPalette) Init() EdgeColor {
+func (cp *EdgeColorPalette) Init() EdgeColor {
 	return cp.colors[cp.seedExtract3()]
 }
 
-func (cp *ColorPalette) Shuffle(color *EdgeColor) {
+func (cp *EdgeColorPalette) Shuffle(color *EdgeColor) {
 	shifted := *color << (1 + cp.seedExtract2())
 	*color = EdgeColor((shifted | shifted>>3) & WHITE)
 }
 
-func (cp *ColorPalette) SuffleEx(color *EdgeColor, banned EdgeColor) {
+func (cp *EdgeColorPalette) ShuffleEx(color *EdgeColor, banned EdgeColor) {
 	combined := EdgeColor(*color & banned)
 	if combined == RED || combined == GREEN || combined == BLUE {
 		*color = EdgeColor(combined ^ WHITE)
