@@ -18,7 +18,7 @@ type Edge struct {
 func (m *Msdf) getEdges(r rune) ([]*Edge, error) {
 	var edges []*Edge
 
-	segments, _, err := m.getVector(r)
+	segments, _, _, err := m.getVector(r)
 	if err != nil {
 		return nil, err
 	}
@@ -36,21 +36,21 @@ func (m *Msdf) getEdges(r rune) ([]*Edge, error) {
 			edges = append(edges, &Edge{
 				id:    idx,
 				Kind:  "L",
-				Curve: NewLine(p0, args[0]),
+				Curve: newLine(p0, args[0]),
 			})
 			p0 = args[0]
 		case sfnt.SegmentOpCubeTo:
 			edges = append(edges, &Edge{
 				id:    idx,
 				Kind:  "C",
-				Curve: NewCubicBezier(p0, args[0], args[1], args[2]),
+				Curve: newCubicBezier(p0, args[0], args[1], args[2]),
 			})
 			p0 = args[2]
 		case sfnt.SegmentOpQuadTo:
 			edges = append(edges, &Edge{
 				id:    idx,
 				Kind:  "Q",
-				Curve: NewQuadraticBezier(p0, args[0], args[1]),
+				Curve: newQuadraticBezier(p0, args[0], args[1]),
 			})
 			p0 = args[1]
 
@@ -63,27 +63,27 @@ func (m *Msdf) getEdges(r rune) ([]*Edge, error) {
 
 }
 
-func (m *Msdf) getVector(r rune) (sfnt.Segments, fixed.Rectangle26_6, error) {
+func (m *Msdf) getVector(r rune) (sfnt.Segments, fixed.Rectangle26_6, fixed.Int26_6, error) {
 
-	ppem := fixed.I(12)
+	ppem := pack_i26_6(m.cfg.Size)
 
 	var buff sfnt.Buffer
 	gi, err := m.font.GlyphIndex(&buff, r)
 	if err != nil {
-		return nil, fixed.Rectangle26_6{}, err
+		return nil, fixed.Rectangle26_6{}, 0, err
 	}
 
 	segments, err := m.font.LoadGlyph(&buff, gi, ppem, nil)
 	if err != nil {
-		return nil, fixed.Rectangle26_6{}, err
+		return nil, fixed.Rectangle26_6{}, 0, err
 	}
 
-	bounds, _, err := m.font.GlyphBounds(&buff, gi, ppem, font.HintingNone)
+	bounds, adv, err := m.font.GlyphBounds(&buff, gi, ppem, font.HintingNone)
 	if err != nil {
-		return nil, fixed.Rectangle26_6{}, err
+		return nil, fixed.Rectangle26_6{}, 0, err
 	}
 
-	return segments, bounds, nil
+	return segments, bounds, adv, nil
 
 }
 func (e *Edge) ID() string {

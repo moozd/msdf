@@ -1,6 +1,7 @@
 package msdf
 
 import (
+	"fmt"
 	"image"
 
 	"golang.org/x/image/math/fixed"
@@ -8,35 +9,60 @@ import (
 
 type Metrics struct {
 	bounds fixed.Rectangle26_6
+	adv    fixed.Int26_6
 	config *Config
 }
 
 func (m *Msdf) getMetrics(r rune) (*Metrics, error) {
 
-	_, bounds, err := m.getVector(r)
+	_, bounds, adv, err := m.getVector(r)
 	if err != nil {
 		return nil, err
 	}
-	metrics := newMetrics(m.cfg, bounds)
+	metrics := newMetrics(m.cfg, bounds, adv)
 	return metrics, nil
 }
 
-func newMetrics(cfg *Config, bounds fixed.Rectangle26_6) *Metrics {
+func newMetrics(cfg *Config, bounds fixed.Rectangle26_6, adv fixed.Int26_6) *Metrics {
 	m := &Metrics{}
 
 	// Store original glyph bounds without padding
 	m.bounds = bounds
 	m.config = cfg
+	m.adv = adv
 
 	return m
 }
 
+func (e *Metrics) GetAdvance() float64 {
+	return unpack_i26_6(e.adv)
+}
+
+func (e *Metrics) GetPlaneBounds() fixed.Rectangle26_6 {
+	return e.bounds
+}
+
+func (e *Metrics) GetBounds() image.Rectangle {
+	return image.Rectangle{
+		Min: image.Point{
+			X: int(e.bounds.Min.X.Floor()),
+			Y: int(e.bounds.Min.Y.Floor()),
+		},
+		Max: image.Point{
+			X: int(e.bounds.Max.X.Ceil()),
+			Y: int(e.bounds.Max.Y.Ceil()),
+		},
+	}
+}
+
 func (e *Metrics) GetRange() (float64, float64) {
 	// Return the original glyph dimensions
-	rangeX := e.bounds.Max.X - e.bounds.Min.X
-	rangeY := e.bounds.Max.Y - e.bounds.Min.Y
-
-	return unpack_i26_6(rangeX), unpack_i26_6(rangeY)
+	x0, y0 := unpack_p26_6(e.bounds.Min)
+	x1, y1 := unpack_p26_6(e.bounds.Max)
+	rangeX := x1 - x0
+	rangeY := y1 - y0
+	fmt.Printf("%f, %f | %f, %f\n", x0, x1, y0, y1)
+	return rangeX, rangeY
 }
 
 func (e *Metrics) ToFloat(x, y int) (float64, float64) {

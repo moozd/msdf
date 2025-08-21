@@ -10,7 +10,7 @@ import (
 	"golang.org/x/image/math/fixed"
 )
 
-func (c *Contour) Debug(g *Glyph, m *Metrics) {
+func (c *Contour) Debug(g *Canvas, m *Metrics) {
 	count := 0
 	for _, edge := range c.Edges {
 
@@ -57,8 +57,8 @@ func (c *Contour) Debug(g *Glyph, m *Metrics) {
 	}
 }
 
-func (m *Msdf) Debug(r rune, tex *Glyph) {
-	out := NewGlyph(512, 512)
+func (m *Msdf) Debug(r rune, tex *Canvas) {
+	out := newCanvas(512, 512, color.RGBA{0, 0, 0, 255})
 
 	texBounds := tex.Image().Bounds()
 

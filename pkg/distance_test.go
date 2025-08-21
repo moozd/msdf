@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mitchellh/go-homedir"
 	"golang.org/x/image/math/fixed"
 )
 
@@ -20,7 +19,7 @@ var subvision = &SubvisionMinDistanceFinder{
 }
 
 func TestSubvisionGetDistance(t *testing.T) {
-	curve := NewCubicBezier(fixed.P(10, 10), fixed.P(10, 60), fixed.P(60, 60), fixed.P(60, 10))
+	curve := newCubicBezier(fixed.P(10, 10), fixed.P(10, 60), fixed.P(60, 60), fixed.P(60, 10))
 	Q := Point{X: 35, Y: 20}
 
 	T1, D1 := bruteforce.Find(curve, Q)
@@ -32,16 +31,17 @@ func TestSubvisionGetDistance(t *testing.T) {
 }
 
 func TestMSDF(t *testing.T) {
-	desktop, _ := homedir.Expand("~/Desktop/")
 	cfg := &Config{
-		Scale:          1,
+		Scale:          0.1,
+		Size:           96,
+		DistanceField:  4.0,
 		DistanceFinder: bruteforce,
-		Debug:          desktop,
 	}
+	generator, _ := New("/home/mo/.local/share/fonts/FiraCode/FiraCodeNerdFont-Regular.ttf", cfg)
 
-	gen, _ := New("/home/mo/.local/share/fonts/FiraCode/FiraCodeNerdFont-Regular.ttf", cfg)
-	x := gen.Get('Q')
-	x.Save("/home/mo/Desktop/A.png")
-	gen.Debug('9', x)
+	atlas, meta := generator.CreateAtlas(512)
+
+	atlas.Save("/home/mo/Desktop/msdf/atlas.png")
+	meta.Save("/home/mo/Desktop/msdf/atlas.json")
 
 }

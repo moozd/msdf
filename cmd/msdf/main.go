@@ -86,9 +86,9 @@ func init() {
 			msdfgen, _ := msdf.New(fontFile, cfg)
 			s := msdfgen.Get(char)
 
-			s.Save(filepath.Join(outDir, fmt.Sprintf("%c.png", char)))
+			s.Canvas.Save(filepath.Join(outDir, fmt.Sprintf("%c.png", char)))
 			if debug {
-				msdfgen.Debug(char, s)
+				msdfgen.Debug(char, s.Canvas)
 			}
 
 		},

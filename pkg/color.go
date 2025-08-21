@@ -50,7 +50,7 @@ func colorize(contours []*Contour, seed uint) {
 
 			// multiple corners
 		} else {
-			cornerCount := len(contours)
+			cornerCount := len(corners)
 			spline := 0
 			start := corners[0]
 			m := len(contour.Edges)

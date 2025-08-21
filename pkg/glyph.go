@@ -1,33 +1,73 @@
 package msdf
 
 import (
-	"image"
-	"image/color"
-	"image/draw"
-	"image/png"
+	"encoding/json"
+	"fmt"
 	"os"
 )
 
 type Glyph struct {
-	img *image.RGBA
+	Canvas  *Canvas
+	Options *GlyphOptions
 }
 
-func NewGlyph(height, width int) *Glyph {
-	o := &Glyph{}
-
-	o.img = image.NewRGBA(image.Rect(0, 0, width, height))
-	bg := &image.Uniform{color.RGBA{0, 0, 0, 255}}
-	draw.Draw(o.img, o.img.Bounds(), bg, image.Point{}, draw.Src)
-
-	return o
+func newGlyph(c *Canvas, m *GlyphOptions) *Glyph {
+	return &Glyph{
+		Canvas:  c,
+		Options: m,
+	}
 }
 
-func (o *Glyph) Save(s string) {
-	file, _ := os.Create(s)
+func (g *Glyph) setUV(uv Coords) {
+	g.Options.AtlasBounds = uv
+}
+
+type Metadata struct {
+	Altas   MetadataAtlas   `json:"atlas"`
+	Metrics MetadataMetrics `json:"metrics"`
+	Glyphs  []GlyphOptions  `json:"glyphs"`
+}
+
+type MetadataAtlas struct {
+	Type          string  `json:"type"`
+	DistanceRange float64 `json:"distanceRange"`
+	Size          float64 `json:"size"`
+	Width         int     `json:"width"`
+	Height        int     `json:"height"`
+	YOrigin       string  `json:"yOrigin"`
+}
+
+type MetadataMetrics struct {
+	EmSize             int `json:"emSize"`
+	LineHeight         int `json:"lineHeight"`
+	Ascender           int `json:"ascender"`
+	Descender          int `json:"descender"`
+	UnderlineY         int `json:"underlineY"`
+	UnderlineThickness int `json:"underlineThickness"`
+}
+
+type GlyphOptions struct {
+	Unicode     int     `json:"unicode"`
+	Advance     float64 `json:"advance"`
+	PlaneBounds Coords  `json:"planeBounds"`
+	AtlasBounds Coords  `json:"atlasBounds"`
+}
+
+type Coords struct {
+	Top    float64 `json:"top"`
+	Bottom float64 `json:"bottom"`
+	Left   float64 `json:"left"`
+	Right  float64 `json:"right"`
+}
+
+func (m *Metadata) Save(path string) error {
+	file, _ := os.Create(path)
 	defer file.Close()
-	png.Encode(file, o.img)
-}
+	jsonData, err := json.MarshalIndent(m, "", "  ")
+	if err != nil {
+		return fmt.Errorf("error marshaling to JSON: %v", err)
+	}
+	_, err = file.WriteString(string(jsonData))
 
-func (o *Glyph) Image() *image.RGBA {
-	return o.img
+	return err
 }

@@ -93,7 +93,7 @@ type CubicBezier struct {
 	baseCurve
 }
 
-func NewCubicBezier(p0, p1, p2, p3 fixed.Point26_6) *CubicBezier {
+func newCubicBezier(p0, p1, p2, p3 fixed.Point26_6) *CubicBezier {
 	cb := &CubicBezier{
 		P0:        p0,
 		P1:        p1,
@@ -164,7 +164,7 @@ type QuadraticBezier struct {
 	baseCurve
 }
 
-func NewQuadraticBezier(p0, p1, p2 fixed.Point26_6) *QuadraticBezier {
+func newQuadraticBezier(p0, p1, p2 fixed.Point26_6) *QuadraticBezier {
 	qb := &QuadraticBezier{
 		P0:        p0,
 		P1:        p1,
@@ -231,7 +231,7 @@ type Line struct {
 	baseCurve
 }
 
-func NewLine(p0, p1 fixed.Point26_6) *Line {
+func newLine(p0, p1 fixed.Point26_6) *Line {
 	ln := &Line{
 		P0:        p0,
 		P1:        p1,
