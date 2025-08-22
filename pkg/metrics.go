@@ -1,7 +1,6 @@
 package msdf
 
 import (
-	"fmt"
 	"image"
 
 	"golang.org/x/image/math/fixed"
@@ -61,7 +60,6 @@ func (e *Metrics) GetRange() (float64, float64) {
 	x1, y1 := unpack_p26_6(e.bounds.Max)
 	rangeX := x1 - x0
 	rangeY := y1 - y0
-	fmt.Printf("%f, %f | %f, %f\n", x0, x1, y0, y1)
 	return rangeX, rangeY
 }
 

@@ -10,9 +10,25 @@ import (
 
 type Edge struct {
 	id    int
-	Kind  string
+	Kind  EdgeKind
 	Color EdgeColor
 	Curve Curve
+}
+
+type EdgeKind string
+
+const (
+	LineEdge            EdgeKind = "L"
+	QuadraticBezierEdge EdgeKind = "Q"
+	CubicBezierEdge     EdgeKind = "C"
+)
+
+func (e *Edge) make(subId int, c Curve) *Edge {
+	return &Edge{
+		id:    (e.id * 100) + subId,
+		Kind:  e.Kind,
+		Curve: c,
+	}
 }
 
 func (m *Msdf) getEdges(r rune) ([]*Edge, error) {
@@ -35,21 +51,21 @@ func (m *Msdf) getEdges(r rune) ([]*Edge, error) {
 
 			edges = append(edges, &Edge{
 				id:    idx,
-				Kind:  "L",
+				Kind:  LineEdge,
 				Curve: newLine(p0, args[0]),
 			})
 			p0 = args[0]
 		case sfnt.SegmentOpCubeTo:
 			edges = append(edges, &Edge{
 				id:    idx,
-				Kind:  "C",
+				Kind:  CubicBezierEdge,
 				Curve: newCubicBezier(p0, args[0], args[1], args[2]),
 			})
 			p0 = args[2]
 		case sfnt.SegmentOpQuadTo:
 			edges = append(edges, &Edge{
 				id:    idx,
-				Kind:  "Q",
+				Kind:  CubicBezierEdge,
 				Curve: newQuadraticBezier(p0, args[0], args[1]),
 			})
 			p0 = args[1]

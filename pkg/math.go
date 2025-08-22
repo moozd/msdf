@@ -1,7 +1,14 @@
 package msdf
 
 import (
+	"math"
+
 	"golang.org/x/image/math/fixed"
+)
+
+const (
+	DEG = 180.0 / math.Pi
+	RAD = math.Pi / 180.0
 )
 
 func sign(s float64) float64 {
@@ -12,6 +19,20 @@ func sign(s float64) float64 {
 		return -1
 	}
 	return 0
+}
+
+func lerp(p0, p1 fixed.Point26_6, t float64) fixed.Point26_6 {
+	x0, y0 := unpack_p26_6(p0)
+	x1, y1 := unpack_p26_6(p1)
+
+	x := x0 + t*(x1-x0)
+	y := y0 + t*(y1-y0)
+
+	return fixed.Point26_6{
+		X: pack_i26_6(x),
+		Y: pack_i26_6(y),
+	}
+
 }
 
 func clamp(value, min, max float64) float64 {

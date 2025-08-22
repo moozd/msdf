@@ -2,7 +2,6 @@ package msdf
 
 import (
 	"image/color"
-	"math"
 	"strings"
 )
 
@@ -14,7 +13,7 @@ type SimpleEdgeColorizer struct{}
 
 func (sc SimpleEdgeColorizer) Colorize(contours []*Contour, palette *EdgeColorPalette) {
 
-	thershold := math.Sin(3)
+	thershold := 126 * RAD
 	var corners []int
 	color := palette.Init()
 
@@ -28,28 +27,55 @@ func (sc SimpleEdgeColorizer) Colorize(contours []*Contour, palette *EdgeColorPa
 			if isCorner {
 				corners = append(corners, i)
 			}
-
 			prevEdge = edge
 		}
 
-		// smooth edge
-		if len(corners) == 0 {
-			// TODO: smooth edge case
+		if len(corners) == 0 { // smooth edge
+			palette.Shuffle(&color)
+			for _, edge := range edges {
+				edge.Color = color
+			}
 
-			// teardrop case
-		} else if len(corners) == 1 {
-			// TODO: add teardrp case
+		} else if len(corners) == 1 { // teardrop case
+			var colors [3]EdgeColor
+			palette.Shuffle(&color)
+			colors[0] = color
+			colors[1] = WHITE
+			palette.Shuffle(&color)
+			colors[2] = color
 
-			// multiple corners
-		} else {
+			E := len(contour.Edges)
+			corner := corners[0]
+			if E >= 3 {
+				for i := range contour.Edges {
+					contour.Edges[(corner+i)%E].Color = colors[1+symmetricalMagic(i, E)]
+				}
+			} else if E >= 1 {
+				contour.Ensure3Edges()
+
+				if E >= 2 {
+					contour.Edges[0].Color = colors[0]
+					contour.Edges[1].Color = colors[0]
+					contour.Edges[2].Color = colors[1]
+					contour.Edges[3].Color = colors[1]
+					contour.Edges[4].Color = colors[2]
+					contour.Edges[5].Color = colors[2]
+				} else {
+
+					contour.Edges[0].Color = colors[0]
+					contour.Edges[1].Color = colors[1]
+					contour.Edges[2].Color = colors[2]
+				}
+			}
+
+		} else { // multiple corners
 			cornerCount := len(corners)
 			spline := 0
 			start := corners[0]
-			m := len(contour.Edges)
 			palette.Shuffle(&color)
 			initialColor := color
-			for i := range m {
-				index := (start + i) % m
+			for i := range contour.Edges {
+				index := (start + i) % len(contour.Edges)
 				if spline+1 < cornerCount && corners[spline+1] == index {
 					spline += 1
 					banned := EdgeColor(0)
@@ -61,8 +87,8 @@ func (sc SimpleEdgeColorizer) Colorize(contours []*Contour, palette *EdgeColorPa
 				contour.Edges[index].Color = color
 			}
 		}
-
 	}
+
 }
 
 type EdgeColor byte
@@ -119,6 +145,12 @@ func (cp *EdgeColorPalette) ShuffleEx(color *EdgeColor, banned EdgeColor) {
 	} else {
 		cp.Shuffle(color)
 	}
+}
+
+// the original function is called symmetricalTrichotomy in Chlumsky's implementation
+// I have no idea how and why it works, but it just selects a random index using pos and n
+func symmetricalMagic(pos, n int) int {
+	return int(3.0+2.875*float64(pos)/(float64(n)-1.0)-1.4375+.5) - 3
 }
 
 func (e EdgeColor) RGB() color.RGBA {

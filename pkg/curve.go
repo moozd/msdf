@@ -10,6 +10,7 @@ type CurveSampler interface {
 	PointAt(t float64) Point
 	TangentAt(t float64) Point
 	CurvatureAt(t float64) Point
+	Split() (Curve, Curve)
 }
 
 type Curve interface {
@@ -157,6 +158,17 @@ func (cb *CubicBezier) PointAt(t float64) Point {
 	}
 }
 
+func (cb *CubicBezier) Split() (Curve, Curve) {
+	Q0 := lerp(cb.P0, cb.P1, 0.5)
+	Q1 := lerp(cb.P1, cb.P2, 0.5)
+	Q2 := lerp(cb.P2, cb.P3, 0.5)
+	R0 := lerp(Q0, Q1, 0.5)
+	R1 := lerp(Q1, Q2, 0.5)
+	S := lerp(R0, R1, 0.5)
+
+	return newCubicBezier(cb.P0, Q0, R0, S), newCubicBezier(S, R1, Q2, cb.P3)
+}
+
 // --------------
 
 type QuadraticBezier struct {
@@ -224,6 +236,13 @@ func (qb *QuadraticBezier) CurvatureAt(t float64) Point {
 	return Point{X: x, Y: y}
 }
 
+func (qb *QuadraticBezier) Split() (Curve, Curve) {
+	Q0 := lerp(qb.P0, qb.P1, 0.5)
+	Q1 := lerp(qb.P1, qb.P2, 0.5)
+	S := lerp(Q0, Q1, 0.5)
+	return newQuadraticBezier(qb.P0, Q0, S), newQuadraticBezier(S, Q1, qb.P2)
+}
+
 // --------------------
 
 type Line struct {
@@ -267,4 +286,9 @@ func (l *Line) TangentAt(t float64) Point {
 
 func (l *Line) CurvatureAt(t float64) Point {
 	return Point{X: 0, Y: 0}
+}
+
+func (l *Line) Split() (Curve, Curve) {
+	p := lerp(l.P0, l.P1, 0.5)
+	return newLine(l.P0, p), newLine(p, l.P1)
 }

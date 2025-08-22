@@ -32,13 +32,18 @@ func TestSubvisionGetDistance(t *testing.T) {
 
 func TestMSDF(t *testing.T) {
 	cfg := &Config{
-		Scale:          0.1,
-		Size:           96,
-		DistanceField:  4.0,
+		Scale:         0.1,
+		Size:          32,
+		Debug:         "/home/mo/Desktop/msdf",
+		DistanceField: 4.0,
+
 		DistanceFinder: bruteforce,
 		EdgeColorizer:  &SimpleEdgeColorizer{},
 	}
 	generator, _ := New("/home/mo/.local/share/fonts/FiraCode/FiraCodeNerdFont-Regular.ttf", cfg)
+
+	// glyph := generator.Get('O')
+	// glyph.Canvas.Save("/home/mo/Desktop/msdf/test.png")
 
 	atlas, meta := generator.CreateAtlas(512)
 
