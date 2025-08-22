@@ -42,7 +42,7 @@ The `assets/` folder contains example outputs showcasing MSDF generation capabil
 
 ### Debug Visualizations (Edge Coloring)
 
-<img src="assets/@_debug.png" width="128"> <img src="assets/A_debug.png" width="128"> <img src="assets/8_debug.png" width="128"> <img src="assets/B_debug.png" width="128"> <img src="assets/g_debug.png" width="128">
+<img src="assets/@_debug.png" width="256"> <img src="assets/A_debug.png" width="256"> <img src="assets/8_debug.png" width="256"> <img src="assets/B_debug.png" width="256"> <img src="assets/g_debug.png" width="256">
 
 ## Installation
 
