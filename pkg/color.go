@@ -2,7 +2,7 @@ package msdf
 
 import (
 	"image/color"
-	"strings"
+	"log"
 )
 
 type EdgeColorizer interface {
@@ -10,6 +10,13 @@ type EdgeColorizer interface {
 }
 
 type SimpleEdgeColorizer struct{}
+
+func (sc SimpleEdgeColorizer) verbose(c string, contour *Contour) {
+	log.Printf("Colorizer: case=%s char=%c\n", c, contour.Symbol)
+	for _, e := range contour.Edges {
+		log.Printf("Colorizer: edge=%v %v\n", e, e.Curve)
+	}
+}
 
 func (sc SimpleEdgeColorizer) Colorize(contours []*Contour, palette *EdgeColorPalette) {
 
@@ -31,12 +38,17 @@ func (sc SimpleEdgeColorizer) Colorize(contours []*Contour, palette *EdgeColorPa
 		}
 
 		if len(corners) == 0 { // smooth edge
+			sc.verbose("smooth:before", contour)
+
 			palette.Shuffle(&color)
 			for _, edge := range edges {
 				edge.Color = color
 			}
 
+			sc.verbose("smooth:after", contour)
+
 		} else if len(corners) == 1 { // teardrop case
+			sc.verbose("teardrop:before", contour)
 			var colors [3]EdgeColor
 			palette.Shuffle(&color)
 			colors[0] = color
@@ -68,7 +80,10 @@ func (sc SimpleEdgeColorizer) Colorize(contours []*Contour, palette *EdgeColorPa
 				}
 			}
 
+			sc.verbose("teardrop:after", contour)
+
 		} else { // multiple corners
+			sc.verbose("multiple:before", contour)
 			cornerCount := len(corners)
 			spline := 0
 			start := corners[0]
@@ -86,6 +101,8 @@ func (sc SimpleEdgeColorizer) Colorize(contours []*Contour, palette *EdgeColorPa
 				}
 				contour.Edges[index].Color = color
 			}
+
+			sc.verbose("multiple:after", contour)
 		}
 	}
 
@@ -130,21 +147,31 @@ func (cp *EdgeColorPalette) seedExtract3() int {
 }
 
 func (cp *EdgeColorPalette) Init() EdgeColor {
-	return cp.colors[cp.seedExtract3()]
+	c := cp.colors[cp.seedExtract3()]
+	log.Printf("EdgeColorPalette: Initialize color ->  (%v)", c)
+	return c
 }
 
 func (cp *EdgeColorPalette) Shuffle(color *EdgeColor) {
+	old := *color
+
 	shifted := *color << (1 + cp.seedExtract2())
 	*color = EdgeColor((shifted | shifted>>3) & WHITE)
+
+	log.Printf("EdgeColorPalette: Shuffle (%v) -> (%v)", old, *color)
 }
 
 func (cp *EdgeColorPalette) ShuffleEx(color *EdgeColor, banned EdgeColor) {
+	old := *color
+
 	combined := EdgeColor(*color & banned)
 	if combined == RED || combined == GREEN || combined == BLUE {
 		*color = EdgeColor(combined ^ WHITE)
 	} else {
 		cp.Shuffle(color)
 	}
+
+	log.Printf("EdgeColorPalette: ShuffleEx (%v) -> (%v)", old, *color)
 }
 
 // the original function is called symmetricalTrichotomy in Chlumsky's implementation
@@ -176,23 +203,38 @@ func (e EdgeColor) Has(color EdgeColor) bool {
 }
 
 func (e EdgeColor) String() string {
-	isRed := e&RED == RED
-	isGreen := e&GREEN == GREEN
-	isBlue := e&BLUE == BLUE
 
-	colors := []string{"-", "-", "-"}
-
-	if isRed {
-		colors[0] = "R"
+	if e&WHITE == WHITE {
+		return "W"
 	}
 
-	if isGreen {
-		colors[1] = "G"
+	if e&MAGENTA == MAGENTA {
+		return "M"
 	}
 
-	if isBlue {
-		colors[2] = "B"
+	if e&YELLOW == YELLOW {
+		return "Y"
 	}
 
-	return strings.Join(colors, " ")
+	if e&CYAN == CYAN {
+		return "C"
+	}
+
+	if e&RED == RED {
+		return "R"
+	}
+
+	if e&GREEN == GREEN {
+		return "G"
+	}
+
+	if e&BLUE == BLUE {
+		return "B"
+	}
+
+	if e == CLEAR {
+		return "-"
+	}
+
+	return "?"
 }

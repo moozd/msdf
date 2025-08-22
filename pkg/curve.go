@@ -1,6 +1,7 @@
 package msdf
 
 import (
+	"fmt"
 	"math"
 
 	"golang.org/x/image/math/fixed"
@@ -11,6 +12,7 @@ type CurveSampler interface {
 	TangentAt(t float64) Point
 	CurvatureAt(t float64) Point
 	Split() (Curve, Curve)
+	String() string
 }
 
 type Curve interface {
@@ -169,6 +171,10 @@ func (cb *CubicBezier) Split() (Curve, Curve) {
 	return newCubicBezier(cb.P0, Q0, R0, S), newCubicBezier(S, R1, Q2, cb.P3)
 }
 
+func (cb CubicBezier) String() string {
+	return fmt.Sprintf("QC[P0=%v, P1=%v, P2=%v, P3=%v]", cb.P0, cb.P1, cb.P2, cb.P3)
+}
+
 // --------------
 
 type QuadraticBezier struct {
@@ -243,6 +249,10 @@ func (qb *QuadraticBezier) Split() (Curve, Curve) {
 	return newQuadraticBezier(qb.P0, Q0, S), newQuadraticBezier(S, Q1, qb.P2)
 }
 
+func (qb QuadraticBezier) String() string {
+	return fmt.Sprintf("QB[P0=%v, P1=%v, P2=%v]", qb.P0, qb.P1, qb.P2)
+}
+
 // --------------------
 
 type Line struct {
@@ -291,4 +301,8 @@ func (l *Line) CurvatureAt(t float64) Point {
 func (l *Line) Split() (Curve, Curve) {
 	p := lerp(l.P0, l.P1, 0.5)
 	return newLine(l.P0, p), newLine(p, l.P1)
+}
+
+func (l Line) String() string {
+	return fmt.Sprintf("LN[P0=%v, P1=%v]", l.P0, l.P1)
 }

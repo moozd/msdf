@@ -2,6 +2,26 @@ package msdf
 
 import "testing"
 
+func TestSimpleEdgeColorzer(t *testing.T) {
+
+	tests := []struct {
+		name string
+		test func(t *testing.T)
+	}{
+		{"smooth", func(t *testing.T) {
+
+		}},
+		{"teardrop", func(t *testing.T) {}},
+		{"multicorner", func(t *testing.T) {
+			t.Error("test")
+		}},
+	}
+
+	for _, c := range tests {
+		t.Run(c.name, c.test)
+	}
+}
+
 func TestEdgeColor(t *testing.T) {
 
 	tests := []struct {
