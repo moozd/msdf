@@ -81,7 +81,7 @@ func (m *Msdf) getEdges(r rune) ([]*Edge, error) {
 
 func (m *Msdf) getVector(r rune) (sfnt.Segments, fixed.Rectangle26_6, fixed.Int26_6, error) {
 
-	ppem := pack_i26_6(m.cfg.Size)
+	ppem := packI26_6(m.cfg.Size)
 
 	var buff sfnt.Buffer
 	gi, err := m.font.GlyphIndex(&buff, r)

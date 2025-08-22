@@ -120,10 +120,10 @@ func (m *Msdf) Get(r rune) *Glyph {
 		Unicode: int(r),
 		Advance: metrics.GetAdvance(),
 		PlaneBounds: Coords{
-			Left:   unpack_i26_6(planeBounds.Min.X),
-			Right:  unpack_i26_6(planeBounds.Max.X),
-			Top:    unpack_i26_6(planeBounds.Min.Y),
-			Bottom: unpack_i26_6(planeBounds.Max.Y),
+			Left:   unpackI26_6(planeBounds.Min.X),
+			Right:  unpackI26_6(planeBounds.Max.X),
+			Top:    unpackI26_6(planeBounds.Min.Y),
+			Bottom: unpackI26_6(planeBounds.Max.Y),
 		},
 	}
 

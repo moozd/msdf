@@ -34,7 +34,7 @@ func newMetrics(cfg *Config, bounds fixed.Rectangle26_6, adv fixed.Int26_6) *Met
 }
 
 func (e *Metrics) GetAdvance() float64 {
-	return unpack_i26_6(e.adv)
+	return unpackI26_6(e.adv)
 }
 
 func (e *Metrics) GetPlaneBounds() fixed.Rectangle26_6 {
@@ -56,8 +56,8 @@ func (e *Metrics) GetBounds() image.Rectangle {
 
 func (e *Metrics) GetRange() (float64, float64) {
 	// Return the original glyph dimensions
-	x0, y0 := unpack_p26_6(e.bounds.Min)
-	x1, y1 := unpack_p26_6(e.bounds.Max)
+	x0, y0 := unpackP26_6(e.bounds.Min)
+	x1, y1 := unpackP26_6(e.bounds.Max)
 	rangeX := x1 - x0
 	rangeY := y1 - y0
 	return rangeX, rangeY
@@ -72,8 +72,8 @@ func (e *Metrics) ToFloat(x, y int) (float64, float64) {
 	normalizedY := float64(y) / float64(e.config.height)
 
 	// Map to glyph coordinate space
-	fx := unpack_i26_6(e.bounds.Min.X) + normalizedX*rangeX
-	fy := unpack_i26_6(e.bounds.Max.Y) - normalizedY*rangeY
+	fx := unpackI26_6(e.bounds.Min.X) + normalizedX*rangeX
+	fy := unpackI26_6(e.bounds.Max.Y) - normalizedY*rangeY
 
 	return fx, fy
 }
@@ -82,8 +82,8 @@ func (e *Metrics) Scale(p fixed.Point26_6, bounds image.Rectangle, padding int) 
 	rangeX, rangeY := e.GetRange()
 
 	// Convert from glyph coords back to texture pixel coords
-	normalizedX := unpack_i26_6(p.X-e.bounds.Min.X) / rangeX
-	normalizedY := unpack_i26_6(p.Y-e.bounds.Min.Y) / rangeY
+	normalizedX := unpackI26_6(p.X-e.bounds.Min.X) / rangeX
+	normalizedY := unpackI26_6(p.Y-e.bounds.Min.Y) / rangeY
 
 	w := bounds.Max.X - bounds.Min.X - 2*padding
 	h := bounds.Max.Y - bounds.Min.Y - 2*padding

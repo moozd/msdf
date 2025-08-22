@@ -44,8 +44,8 @@ func (c *baseCurve) doLowResSampling(sampler CurveSampler) {
 		c.points = append(c.points, p.asFixed())
 	}
 
-	x0, y0 := unpack_p26_6(c.points[0])
-	x1, y1 := unpack_p26_6(c.points[len(c.points)-1])
+	x0, y0 := unpackP26_6(c.points[0])
+	x1, y1 := unpackP26_6(c.points[len(c.points)-1])
 	c.directionVec = &Vector{}
 	c.directionVec.fromXY(x0, y0, x1, y1)
 }
@@ -110,10 +110,10 @@ func newCubicBezier(p0, p1, p2, p3 fixed.Point26_6) *CubicBezier {
 
 func (cb *CubicBezier) TangentAt(t float64) Point {
 
-	x0, y0 := unpack_p26_6(cb.P0)
-	x1, y1 := unpack_p26_6(cb.P1)
-	x2, y2 := unpack_p26_6(cb.P2)
-	x3, y3 := unpack_p26_6(cb.P3)
+	x0, y0 := unpackP26_6(cb.P0)
+	x1, y1 := unpackP26_6(cb.P1)
+	x2, y2 := unpackP26_6(cb.P2)
+	x3, y3 := unpackP26_6(cb.P3)
 
 	x := 3*(x1-x0) + 6*t*(x2-2*x1+x0) + 3*math.Pow(t, 2)*(x3-3*x2+3*x1-x0)
 	y := 3*(y1-y0) + 6*t*(y2-2*y1+y0) + 3*math.Pow(t, 2)*(y3-3*y2+3*y1-y0)
@@ -126,10 +126,10 @@ func (cb *CubicBezier) TangentAt(t float64) Point {
 
 func (cb *CubicBezier) CurvatureAt(t float64) Point {
 
-	x0, y0 := unpack_p26_6(cb.P0)
-	x1, y1 := unpack_p26_6(cb.P1)
-	x2, y2 := unpack_p26_6(cb.P2)
-	x3, y3 := unpack_p26_6(cb.P3)
+	x0, y0 := unpackP26_6(cb.P0)
+	x1, y1 := unpackP26_6(cb.P1)
+	x2, y2 := unpackP26_6(cb.P2)
+	x3, y3 := unpackP26_6(cb.P3)
 
 	//B''(t) = 6(1-t)(P₂ - 2P₁ + P₀) + 6t(P₃ - 2P₂ + P₁)
 	x := 6*(1-t)*(x2-2*x1+x0) + 6*t*(x3-2*x2+x1)
@@ -139,10 +139,10 @@ func (cb *CubicBezier) CurvatureAt(t float64) Point {
 }
 
 func (cb *CubicBezier) PointAt(t float64) Point {
-	x0, y0 := unpack_p26_6(cb.P0)
-	x1, y1 := unpack_p26_6(cb.P1)
-	x2, y2 := unpack_p26_6(cb.P2)
-	x3, y3 := unpack_p26_6(cb.P3)
+	x0, y0 := unpackP26_6(cb.P0)
+	x1, y1 := unpackP26_6(cb.P1)
+	x2, y2 := unpackP26_6(cb.P2)
+	x3, y3 := unpackP26_6(cb.P3)
 
 	T0 := math.Pow(1-t, 3)
 	T1 := math.Pow(1-t, 2) * t * 3
@@ -191,9 +191,9 @@ func newQuadraticBezier(p0, p1, p2 fixed.Point26_6) *QuadraticBezier {
 
 func (qb *QuadraticBezier) TangentAt(t float64) Point {
 
-	x0, y0 := unpack_p26_6(qb.P0)
-	x1, y1 := unpack_p26_6(qb.P1)
-	x2, y2 := unpack_p26_6(qb.P2)
+	x0, y0 := unpackP26_6(qb.P0)
+	x1, y1 := unpackP26_6(qb.P1)
+	x2, y2 := unpackP26_6(qb.P2)
 
 	x := 2*(x1-x0) + 2*t*(x2-2*x1+x0)
 	y := 2*(y1-y0) + 2*t*(y2-2*y1+y0)
@@ -206,9 +206,9 @@ func (qb *QuadraticBezier) TangentAt(t float64) Point {
 
 func (qb *QuadraticBezier) PointAt(t float64) Point {
 
-	x0, y0 := unpack_p26_6(qb.P0)
-	x1, y1 := unpack_p26_6(qb.P1)
-	x2, y2 := unpack_p26_6(qb.P2)
+	x0, y0 := unpackP26_6(qb.P0)
+	x1, y1 := unpackP26_6(qb.P1)
+	x2, y2 := unpackP26_6(qb.P2)
 
 	T0 := math.Pow(1-t, 2)
 	T1 := (1 - t) * t * 2
@@ -225,9 +225,9 @@ func (qb *QuadraticBezier) PointAt(t float64) Point {
 
 func (qb *QuadraticBezier) CurvatureAt(t float64) Point {
 
-	x0, y0 := unpack_p26_6(qb.P0)
-	x1, y1 := unpack_p26_6(qb.P1)
-	x2, y2 := unpack_p26_6(qb.P2)
+	x0, y0 := unpackP26_6(qb.P0)
+	x1, y1 := unpackP26_6(qb.P1)
+	x2, y2 := unpackP26_6(qb.P2)
 
 	//B''(t) = 2(P₂ - 2P₁ + P₀)
 	x := 2 * (x2 - 2*x1 + x0)
@@ -263,8 +263,8 @@ func newLine(p0, p1 fixed.Point26_6) *Line {
 }
 
 func (ln *Line) PointAt(t float64) Point {
-	x0, y0 := unpack_p26_6(ln.P0)
-	x1, y1 := unpack_p26_6(ln.P1)
+	x0, y0 := unpackP26_6(ln.P0)
+	x1, y1 := unpackP26_6(ln.P1)
 
 	x := x0 + t*(x1-x0)
 	y := y0 + t*(y1-y0)
@@ -276,8 +276,8 @@ func (ln *Line) PointAt(t float64) Point {
 }
 
 func (l *Line) TangentAt(t float64) Point {
-	x0, y0 := unpack_p26_6(l.P0)
-	x1, y1 := unpack_p26_6(l.P1)
+	x0, y0 := unpackP26_6(l.P0)
+	x1, y1 := unpackP26_6(l.P1)
 	return Point{
 		X: x1 - x0,
 		Y: y1 - y0,

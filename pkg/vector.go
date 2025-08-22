@@ -20,7 +20,7 @@ func (p Point) asVector() *Vector {
 }
 
 func (p Point) asFixed() fixed.Point26_6 {
-	return pack_p26_6(p.X, p.Y)
+	return packP26_6(p.X, p.Y)
 }
 
 func (p Point) Sub(b Point) *Vector {
@@ -44,8 +44,8 @@ func (v *Vector) fromAB(a, b Point) *Vector {
 }
 
 func (v *Vector) fromP26_6(a, b fixed.Point26_6) *Vector {
-	xa, ya := unpack_p26_6(a)
-	xb, yb := unpack_p26_6(b)
+	xa, ya := unpackP26_6(a)
+	xb, yb := unpackP26_6(b)
 	v.fromXY(xa, ya, xb, yb)
 	return v
 }
@@ -73,8 +73,8 @@ func (v *Vector) Normalize() *Vector {
 
 func (v *Vector) Fixed() fixed.Point26_6 {
 	return fixed.Point26_6{
-		X: pack_i26_6(v.X),
-		Y: pack_i26_6(v.Y),
+		X: packI26_6(v.X),
+		Y: packI26_6(v.Y),
 	}
 }
 
