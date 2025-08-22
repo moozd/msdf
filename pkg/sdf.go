@@ -64,8 +64,13 @@ func (m *Msdf) CreateAtlas(size int, charset string) (*Canvas, *Metadata, error)
 	x := 0
 	y := 0
 	var glyps []*Glyph
+	done := make(map[rune]bool)
 
 	for _, c := range charset {
+		if done[c] == true {
+			continue
+		}
+		done[c] = true
 		glyph, err := m.Get(c)
 		if err != nil {
 			return nil, nil, err
