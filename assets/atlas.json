@@ -1,0 +1,19 @@
+{
+  "atlas": {
+    "type": "msdf",
+    "distanceRange": 0,
+    "size": 96,
+    "width": 512,
+    "height": 512,
+    "yOrigin": "bottom"
+  },
+  "metrics": {
+    "emSize": 0,
+    "lineHeight": 0,
+    "ascender": 0,
+    "descender": 0,
+    "underlineY": 0,
+    "underlineThickness": 0
+  },
+  "glyphs": []
+}

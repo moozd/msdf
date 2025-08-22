@@ -52,7 +52,7 @@ func New(addr string, cfg *Config) (*Msdf, error) {
 	return msdf, nil
 }
 
-func (m *Msdf) CreateAtlas(size int) (*Canvas, Metadata) {
+func (m *Msdf) CreateAtlas(size int, charset string) (*Canvas, *Metadata, error) {
 	atlas := newCanvas(size, size, color.RGBA{0, 0, 0, 255})
 	m.metadata.Atlas.Type = "msdf"
 	m.metadata.Atlas.YOrigin = "bottom"
@@ -65,9 +65,11 @@ func (m *Msdf) CreateAtlas(size int) (*Canvas, Metadata) {
 	y := 0
 	var glyps []*Glyph
 
-	for i := 32; i < 128; i++ {
-		c := rune(i)
-		glyph := m.Get(c)
+	for _, c := range charset {
+		glyph, err := m.Get(c)
+		if err != nil {
+			return nil, nil, err
+		}
 		glyps = append(glyps, glyph)
 	}
 
@@ -105,12 +107,20 @@ func (m *Msdf) CreateAtlas(size int) (*Canvas, Metadata) {
 
 	}
 
-	return atlas, *m.metadata
+	return atlas, m.metadata, nil
 }
 
-func (m *Msdf) Get(r rune) *Glyph {
-	metrics, _ := m.getMetrics(r)
-	contours, _ := m.getContours(r)
+func (m *Msdf) Get(r rune) (*Glyph, error) {
+	metrics, err := m.getMetrics(r)
+	if err != nil {
+		return nil, err
+	}
+
+	contours, err := m.getContours(r)
+	if err != nil {
+		return nil, err
+	}
+
 	bounds := metrics.GetBounds()
 	m.cfg.width = bounds.Dx()
 	m.cfg.height = bounds.Dy()
@@ -152,7 +162,7 @@ func (m *Msdf) Get(r rune) *Glyph {
 		dbg.Save(fmt.Sprintf("%s/%c_debug.png", m.cfg.DebugArtifactDir, r))
 		m.render(r, canvas)
 	}
-	return newGlyph(canvas, &options)
+	return newGlyph(canvas, &options), nil
 }
 
 func (m *Msdf) getChannel(contours []*Contour, c EdgeColor, x, y float64) uint8 {

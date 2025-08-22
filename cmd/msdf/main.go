@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
+	"path"
 
 	"github.com/mitchellh/go-homedir"
 	msdf "github.com/moozd/msdf/pkg"
@@ -14,94 +14,110 @@ var rootCmd = &cobra.Command{
 	Use:   "msdf",
 	Short: "Msdf texture generator",
 	Long:  `This is a go implementation of msdf texture generation. check this https://github.com/Chlumsky/msdfgen `,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("MSDF cli use --help for more information")
-	},
+	Run:   run,
+}
+
+func run(cmd *cobra.Command, args []string) {
+	addr, err := cmd.Flags().GetString("font")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	output, err := cmd.Flags().GetString("output")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	charset, err := cmd.Flags().GetString("charset")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	seed, err := cmd.Flags().GetUint("seed")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	scale, err := cmd.Flags().GetFloat64("scale")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	distanceField, err := cmd.Flags().GetFloat64("distance-field")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	debug, err := cmd.Flags().GetBool("debug")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	size, err := cmd.Flags().GetFloat64("size")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	fontFile, err := homedir.Expand(addr)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	outDir, err := homedir.Expand(output)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	debugPath := ""
+	if debug {
+		debugPath = outDir
+	}
+	cfg := &msdf.Config{
+		Seed:             seed,
+		Scale:            scale,
+		Size:             size,
+		DebugArtifactDir: debugPath,
+		DistanceField:    distanceField,
+		EdgeColorizer:    &msdf.SimpleEdgeColorizer{},
+		DistanceFinder:   &msdf.BruteForceMinDistanceFinder{},
+	}
+	msdfgen, err := msdf.New(fontFile, cfg)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	c, m, err := msdfgen.CreateAtlas(512, charset)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	c.Save(path.Join(outDir, "atlas.png"))
+	m.Save(path.Join(outDir, "atlas.json"))
 }
 
 func init() {
 
-	var glyphCmd = &cobra.Command{
-		Use:   "glyph",
-		Short: "Create a msdf glyph",
-		Long:  "It will generate a new msdf glyph",
-		Run: func(cmd *cobra.Command, args []string) {
-			addr, err := cmd.Flags().GetString("font")
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-			output, err := cmd.Flags().GetString("out")
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			c, err := cmd.Flags().GetString("char")
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			seed, err := cmd.Flags().GetUint("seed")
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			scale, err := cmd.Flags().GetFloat64("scale")
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			debug, err := cmd.Flags().GetBool("debug")
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			char := []rune(c)[0]
-			fontFile, err := homedir.Expand(addr)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-			outDir, err := homedir.Expand(output)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			debugPath := ""
-			if debug {
-				debugPath = outDir
-			}
-			cfg := &msdf.Config{
-				Seed:             seed,
-				Scale:            scale,
-				DebugArtifactDir: debugPath,
-				EdgeColorizer:    &msdf.SimpleEdgeColorizer{},
-				DistanceFinder:   &msdf.BruteForceMinDistanceFinder{},
-			}
-			msdfgen, _ := msdf.New(fontFile, cfg)
-			s := msdfgen.Get(char)
-
-			s.Canvas.Save(filepath.Join(outDir, fmt.Sprintf("%c.png", char)))
-
-		},
-	}
-	glyphCmd.Flags().BoolP("debug", "d", false, "Generate Debug output to see the edge coloring")
-	glyphCmd.Flags().StringP("font", "f", "", "Font path.")
-	glyphCmd.Flags().StringP("char", "c", "", "Character.")
-	glyphCmd.Flags().StringP("out", "o", ".", "Output dir path.")
-	glyphCmd.Flags().Uint("seed", 0, "coloring seed")
-	glyphCmd.Flags().Float64("scale", 1.0, "texture scale")
-
-	rootCmd.AddCommand(glyphCmd)
+	rootCmd.Flags().BoolP("debug", "d", false, "Generate Debug output to see the edge coloring")
+	rootCmd.Flags().StringP("font", "f", "", "Font path.")
+	rootCmd.Flags().StringP("charset", "c", "", "Character set.")
+	rootCmd.Flags().StringP("output", "o", ".", "Output dir path.")
+	rootCmd.Flags().Uint("seed", 0, "coloring seed")
+	rootCmd.Flags().Float64("scale", 1.0, "texture scale")
+	rootCmd.Flags().Float64P("size", "s", 1.0, "font size")
+	rootCmd.Flags().Float64("distance-field", 4.0, "Distance field, default is 4.0")
 }
 
 func main() {
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
