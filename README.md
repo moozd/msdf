@@ -168,3 +168,7 @@ go mod verify
 - Atlas generation for multiple characters
 - Debug visualization for edge coloring analysis
 - Configurable distance field parameters
+
+## Credits
+
+This project is based on Viktor Chlumský's original [msdfgen](https://github.com/Chlumsky/msdfgen) repository. The original C++ implementation provided the foundation and inspiration for this Go port of the Multi-Channel Signed Distance Field generation algorithm.
