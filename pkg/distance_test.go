@@ -34,7 +34,7 @@ func TestMSDF(t *testing.T) {
 	cfg := &Config{
 		Scale:         0.1,
 		Size:          32,
-		Debug:         "/home/mo/Desktop/msdf",
+		DebugArtifactDir:         "/home/mo/Desktop/msdf",
 		DistanceField: 4.0,
 
 		DistanceFinder: bruteforce,

@@ -78,19 +78,16 @@ func init() {
 				debugPath = outDir
 			}
 			cfg := &msdf.Config{
-				Seed:           seed,
-				Scale:          scale,
-				Debug:          debugPath,
-				EdgeColorizer:      &msdf.SimpleEdgeColorizer{},
-				DistanceFinder: &msdf.BruteForceMinDistanceFinder{},
+				Seed:             seed,
+				Scale:            scale,
+				DebugArtifactDir: debugPath,
+				EdgeColorizer:    &msdf.SimpleEdgeColorizer{},
+				DistanceFinder:   &msdf.BruteForceMinDistanceFinder{},
 			}
 			msdfgen, _ := msdf.New(fontFile, cfg)
 			s := msdfgen.Get(char)
 
 			s.Canvas.Save(filepath.Join(outDir, fmt.Sprintf("%c.png", char)))
-			if debug {
-				msdfgen.Debug(char, s.Canvas)
-			}
 
 		},
 	}

@@ -18,14 +18,14 @@ type Msdf struct {
 }
 
 type Config struct {
-	Seed           uint
-	Size           float64
-	DistanceField  float64
-	Scale          float64
-	Debug          string
-	DistanceFinder MinDistanceFinder
-	EdgeColorizer      EdgeColorizer
-	height, width  int
+	Seed             uint
+	Size             float64
+	DistanceField    float64
+	Scale            float64
+	DebugArtifactDir string
+	DistanceFinder   MinDistanceFinder
+	EdgeColorizer    EdgeColorizer
+	height, width    int
 }
 
 func New(addr string, cfg *Config) (*Msdf, error) {
@@ -144,13 +144,13 @@ func (m *Msdf) Get(r rune) *Glyph {
 
 	}
 
-	if m.cfg.Debug != "" {
+	if m.cfg.DebugArtifactDir != "" {
 		dbg := newCanvas(512, 512, color.RGBA{0, 0, 0, 255})
 		for _, con := range contours {
 			con.Debug(dbg, metrics)
 		}
-		dbg.Save(fmt.Sprintf("%s/%c_debug.png", m.cfg.Debug, r))
-
+		dbg.Save(fmt.Sprintf("%s/%c_debug.png", m.cfg.DebugArtifactDir, r))
+		m.render(r, canvas)
 	}
 	return newGlyph(canvas, &options)
 }

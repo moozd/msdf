@@ -57,7 +57,7 @@ func (c *Contour) Debug(g *Canvas, m *Metrics) {
 	}
 }
 
-func (m *Msdf) Debug(r rune, tex *Canvas) {
+func (m *Msdf) render(r rune, tex *Canvas) {
 	out := newCanvas(512, 512, color.RGBA{0, 0, 0, 255})
 
 	texBounds := tex.Image().Bounds()
@@ -87,6 +87,6 @@ func (m *Msdf) Debug(r rune, tex *Canvas) {
 		}
 	}
 
-	out.Save(fmt.Sprintf("%s/%c_render.png", m.cfg.Debug, r))
+	out.Save(fmt.Sprintf("%s/%c_render.png", m.cfg.DebugArtifactDir, r))
 
 }
