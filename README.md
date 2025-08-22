@@ -28,31 +28,21 @@ The `assets/` folder contains example outputs showcasing MSDF generation capabil
 
 ## Examples
 
-### MSDF Textures and Rendered Output
-
-| Character | Rendered Output                            |
-| --------- | ------------------------------------------ |
-| **@**     | <img src="assets/@_render.png" width="32"> |
-| **A**     | <img src="assets/A_render.png" width="32"> |
-| **8**     | <img src="assets/8_render.png" width="32"> |
-| **B**     | <img src="assets/B_render.png" width="32"> |
-| **g**     | <img src="assets/g_render.png" width="32"> |
-
-### Debug Visualizations (Edge Coloring)
-
-| Character | Debug Visualization                        |
-| --------- | ------------------------------------------ |
-| **@**     | <img src="assets/@_debug.png" width="128"> |
-| **A**     | <img src="assets/A_debug.png" width="128"> |
-| **8**     | <img src="assets/8_debug.png" width="128"> |
-| **B**     | <img src="assets/B_debug.png" width="128"> |
-| **g**     | <img src="assets/g_debug.png" width="128"> |
-
 ### Atlas Generation
 
 <img src="assets/atlas.png" width="256">
 
 *Combined texture atlas containing multiple characters with optimized packing*
+
+### Rendered Output
+
+| **@** | **A** | **8** | **B** | **g** |
+| ----- | ----- | ----- | ----- | ----- |
+| <img src="assets/@_render.png" width="32"> | <img src="assets/A_render.png" width="32"> | <img src="assets/8_render.png" width="32"> | <img src="assets/B_render.png" width="32"> | <img src="assets/g_render.png" width="32"> |
+
+### Debug Visualizations (Edge Coloring)
+
+<img src="assets/@_debug.png" width="128"> <img src="assets/A_debug.png" width="128"> <img src="assets/8_debug.png" width="128"> <img src="assets/B_debug.png" width="128"> <img src="assets/g_debug.png" width="128">
 
 ## Installation
 
