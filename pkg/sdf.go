@@ -15,6 +15,7 @@ type Msdf struct {
 	cfg      *Config
 	metadata *Metadata
 	palette  *EdgeColorPalette
+	cache    map[rune]*Glyph
 }
 
 type Config struct {
@@ -45,6 +46,7 @@ func New(addr string, cfg *Config) (*Msdf, error) {
 	msdf := &Msdf{
 		cfg:      cfg,
 		font:     fnt,
+		cache:    make(map[rune]*Glyph),
 		metadata: &Metadata{},
 		palette:  newEdgeColorPalette(&cfg.Seed),
 	}
@@ -116,6 +118,10 @@ func (m *Msdf) CreateAtlas(size int, charset string) (*Canvas, *Metadata, error)
 }
 
 func (m *Msdf) Get(r rune) (*Glyph, error) {
+	glyph, ok := m.cache[r]
+	if ok {
+		return glyph, nil
+	}
 	metrics, err := m.getMetrics(r)
 	if err != nil {
 		return nil, err
@@ -167,7 +173,9 @@ func (m *Msdf) Get(r rune) (*Glyph, error) {
 		dbg.Save(fmt.Sprintf("%s/%c_debug.png", m.cfg.DebugArtifactDir, r))
 		m.render(r, canvas)
 	}
-	return newGlyph(canvas, &options), nil
+
+	m.cache[r] = newGlyph(canvas, &options)
+	return m.cache[r], nil
 }
 
 func (m *Msdf) getChannel(contours []*Contour, c EdgeColor, x, y float64) uint8 {
