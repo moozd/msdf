@@ -112,6 +112,7 @@ func (m *Msdf) CreateAtlas(size int, charset string) (*Canvas, *Metadata, error)
 
 		x += img.Bounds().Dx()
 
+		m.metadata.Glyphs = append(m.metadata.Glyphs, *g.Options)
 	}
 
 	return atlas, m.metadata, nil
