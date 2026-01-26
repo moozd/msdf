@@ -112,7 +112,7 @@ func init() {
 	rootCmd.Flags().StringP("output", "o", ".", "Output dir path.")
 	rootCmd.Flags().Uint("seed", 0, "coloring seed")
 	rootCmd.Flags().Float64("scale", 1.0, "texture scale")
-	rootCmd.Flags().Float64P("size", "s", 1.0, "font size")
+	rootCmd.Flags().Float64P("size", "s", 10.0, "font size")
 	rootCmd.Flags().Float64("distance-field", 4.0, "Distance field, default is 4.0")
 }
 
