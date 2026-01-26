@@ -1,4 +1,4 @@
-module github.com/moozd/msdf
+module github.com/pierrec/msdf
 
 go 1.24.5
 

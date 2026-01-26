@@ -2,6 +2,8 @@
 
 Go implementation of Multi-Channel Signed Distance Field generation for font rendering.
 
+*forked from [Chlumsky/msdfgen](https://github.com/moozd/msdf)*
+
 ## What is MSDF?
 
 MSDF encodes vector fonts as textures using RGB channels to preserve sharp corners and fine details.
