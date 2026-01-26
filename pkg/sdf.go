@@ -43,6 +43,13 @@ func New(addr string, cfg *Config) (*Msdf, error) {
 		return nil, err
 	}
 
+	if cfg.EdgeColorizer == nil {
+		cfg.EdgeColorizer = &SimpleEdgeColorizer{}
+	}
+	if cfg.DistanceFinder == nil {
+		cfg.DistanceFinder = &BruteForceMinDistanceFinder{}
+	}
+
 	msdf := &Msdf{
 		cfg:      cfg,
 		font:     fnt,
