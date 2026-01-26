@@ -6,7 +6,7 @@ import (
 	"path"
 
 	"github.com/mitchellh/go-homedir"
-	msdf "github.com/moozd/msdf/pkg"
+	msdf "github.com/pierrec/msdf/pkg"
 	"github.com/spf13/cobra"
 )
 
