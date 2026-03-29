@@ -28,7 +28,7 @@ func (c *Canvas) Set(x, y int, r, g, b uint8) {
 }
 
 func (c *Canvas) Put(x, y int, g *Canvas) {
-	srcBounds := c.buffer.Bounds()
+	srcBounds := g.buffer.Bounds()
 	flippedY := y
 	dstRect := image.Rect(x, flippedY, x+srcBounds.Dx(), y+srcBounds.Dy())
 	draw.Draw(c.buffer, dstRect, g.buffer, srcBounds.Min, draw.Over)

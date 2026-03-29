@@ -2,7 +2,6 @@ package msdf
 
 import (
 	"image/color"
-	"log"
 )
 
 type EdgeColorizer interface {
@@ -10,13 +9,6 @@ type EdgeColorizer interface {
 }
 
 type SimpleEdgeColorizer struct{}
-
-func (sc SimpleEdgeColorizer) verbose(c string, contour *Contour) {
-	log.Printf("Colorizer: case=%s char=%c\n", c, contour.Symbol)
-	for _, e := range contour.Edges {
-		log.Printf("Colorizer: edge=%v %v\n", e, e.Curve)
-	}
-}
 
 func (sc SimpleEdgeColorizer) Colorize(contours []*Contour, palette *EdgeColorPalette) {
 
@@ -148,7 +140,7 @@ func (cp *EdgeColorPalette) seedExtract3() int {
 
 func (cp *EdgeColorPalette) Init() EdgeColor {
 	c := cp.colors[cp.seedExtract3()]
-	log.Printf("EdgeColorPalette: Initialize color ->  (%v)", c)
+	logf("EdgeColorPalette: Initialize color ->  (%v)", c)
 	return c
 }
 
@@ -158,7 +150,7 @@ func (cp *EdgeColorPalette) Shuffle(color *EdgeColor) {
 	shifted := *color << (1 + cp.seedExtract2())
 	*color = EdgeColor((shifted | shifted>>3) & WHITE)
 
-	log.Printf("EdgeColorPalette: Shuffle (%v) -> (%v)", old, *color)
+	logf("EdgeColorPalette: Shuffle (%v) -> (%v)", old, *color)
 }
 
 func (cp *EdgeColorPalette) ShuffleEx(color *EdgeColor, banned EdgeColor) {
@@ -171,7 +163,7 @@ func (cp *EdgeColorPalette) ShuffleEx(color *EdgeColor, banned EdgeColor) {
 		cp.Shuffle(color)
 	}
 
-	log.Printf("EdgeColorPalette: ShuffleEx (%v) -> (%v)", old, *color)
+	logf("EdgeColorPalette: ShuffleEx (%v) -> (%v)", old, *color)
 }
 
 // the original function is called symmetricalTrichotomy in Chlumsky's implementation

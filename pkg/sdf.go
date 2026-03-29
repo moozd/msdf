@@ -30,28 +30,32 @@ type Config struct {
 }
 
 func New(addr string, cfg *Config) (*Msdf, error) {
-
 	fd, err := os.ReadFile(addr)
-
 	if err != nil {
 		return nil, err
 	}
-
 	fnt, err := sfnt.Parse(fd)
-
 	if err != nil {
 		return nil, err
 	}
+	return NewFromFont(fnt, cfg), nil
+}
 
-	msdf := &Msdf{
+func NewFromFont(fnt *sfnt.Font, cfg *Config) *Msdf {
+	if cfg.EdgeColorizer == nil {
+		cfg.EdgeColorizer = &SimpleEdgeColorizer{}
+	}
+	if cfg.DistanceFinder == nil {
+		cfg.DistanceFinder = &BruteForceMinDistanceFinder{}
+	}
+
+	return &Msdf{
 		cfg:      cfg,
 		font:     fnt,
 		cache:    make(map[rune]*Glyph),
 		metadata: &Metadata{},
 		palette:  newEdgeColorPalette(&cfg.Seed),
 	}
-
-	return msdf, nil
 }
 
 func (m *Msdf) CreateAtlas(size int, charset string) (*Canvas, *Metadata, error) {
